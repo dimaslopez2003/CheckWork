@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">WorkCheckApp</string>
+    <string name="welcome">¡BIENVENIDO!</string>
+    <string name="entrada">Entrada</string>
+    <string name="salida">Salida</string>
+    <string name="calendar">Calendario</string>
+    <string name="home">Home</string>
+    <string name="records">Registros</string>
+</resources>
