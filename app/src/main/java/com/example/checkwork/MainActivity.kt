@@ -1,15 +1,11 @@
 package com.example.checkwork
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,7 +26,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             CheckWorkTheme {
                 RelojChecadorApp()
-                getCurrentTime()
+
             }
         }
     }
@@ -77,7 +73,7 @@ fun PantallaPrincipal() {
             modifier = Modifier.fillMaxWidth().padding(16.dp)
         ) {
             Button(
-                onClick = { /* Registrar entrada */ },
+                onClick = { },
                 colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50))
             ) {
                 Text("Entrada")
