@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             CheckWorkTheme {
                 RelojChecadorApp()
-
+                getCurrentTime()
             }
         }
     }
