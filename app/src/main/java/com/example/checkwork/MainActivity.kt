@@ -17,9 +17,8 @@ import androidx.compose.ui.unit.sp
 import com.example.checkwork.ui.theme.CheckWorkTheme
 import kotlinx.coroutines.delay
 import com.example.checkwork.FunctionTime.getCurrentTime
-import com.example.checkwork.NavigationBar.BottomNavigationBar
 import com.example.checkwork.dashboard.RelojChecadorApp
-
+//import com.example.checkwork.NavigationBar.BottomNavigationBar
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
