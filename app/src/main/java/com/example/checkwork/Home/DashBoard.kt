@@ -1,16 +1,12 @@
 package com.example.checkwork.Home
 
-import HamburgerMenu
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Brightness2
-import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,9 +28,9 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
     val systemUiController = rememberSystemUiController()
     systemUiController.setSystemBarsColor(color = Color(0xFF0056E0))
 
-
     var currentTime by remember { mutableStateOf(getCurrentTime()) }
 
+    // Actualiza el tiempo cada segundo
     LaunchedEffect(Unit) {
         while (true) {
             delay(1000L)
@@ -42,20 +38,18 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
         }
     }
 
-    // Estado para el Scaffold
     val scaffoldState = rememberScaffoldState()
-    val scope = rememberCoroutineScope()
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         scaffoldState = scaffoldState,
         topBar = {
             TopAppBar(
-                modifier = Modifier.fillMaxWidth(),
                 title = { Text("WorkCheckApp", color = Color.White) },
                 backgroundColor = Color(0xFF0056E0),
                 navigationIcon = {
                     IconButton(onClick = {
-                        scope.launch {
+                        coroutineScope.launch {
                             scaffoldState.drawerState.open()
                         }
                     }) {
@@ -63,7 +57,7 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = {  }) {
+                    IconButton(onClick = { }) {
                         Icon(
                             Icons.Filled.Brightness2,
                             contentDescription = "DarkMode",
@@ -74,29 +68,133 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
             )
         },
         drawerContent = {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = "Menú", style = MaterialTheme.typography.h6)
-                Spacer(modifier = Modifier.height(16.dp))
+            // Contenido del menú lateral (Hamburger Menu)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFF042159))
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "SISTEMAS",
+                    style = MaterialTheme.typography.h6.copy(color = Color.White),
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
 
-                TextButton(onClick = {
-                    scope.launch { scaffoldState.drawerState.close() }
-                    navController.navigate("home")
-                }) {
-                    Text("Home")
+                Text(
+                    text = "Dimas Arturo López Montalvo",
+                    style = MaterialTheme.typography.body1.copy(color = Color.White),
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // Perfil
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.AccountCircle,
+                        contentDescription = "Perfil",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(text = "Perfil", color = Color.White, fontSize = 16.sp)
+                        Text(text = "Agrega una foto para identificarte.", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                    }
                 }
 
-                TextButton(onClick = {
-                    scope.launch { scaffoldState.drawerState.close() }
-                    navController.navigate("form")
-                }) {
-                    Text("Formulario")
+                // Registrar biométricos
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                )
+                {
                 }
 
-                TextButton(onClick = {
-                    scope.launch { scaffoldState.drawerState.close() }
-                    navController.navigate("login")
-                }) {
-                    Text("Cerrar Sesión")
+                Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color.White.copy(alpha = 0.3f))
+
+                // Modo Oscuro
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Brightness2,
+                        contentDescription = "Modo Oscuro",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(text = "Modo Oscuro", color = Color.White, fontSize = 16.sp)
+                        Text(text = "Para descansar tu vista activa modo oscuro.", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                    }
+                }
+
+                // Asistencia
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Help,
+                        contentDescription = "Asistencia",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(text = "Asistencia", color = Color.White, fontSize = 16.sp)
+                        Text(text = "Soporte, ayuda y más.", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                    }
+                }
+
+                Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color.White.copy(alpha = 0.3f))
+
+                // Navegación al formulario
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                        .clickable {
+                            coroutineScope.launch { scaffoldState.drawerState.close() }
+                            navController.navigate("form")
+                        }
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Edit,
+                        contentDescription = "Formulario",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(text = "Formulario", color = Color.White, fontSize = 16.sp)
+                }
+
+                // Cerrar sesión
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                        .clickable {
+                            coroutineScope.launch { scaffoldState.drawerState.close() }
+                            navController.navigate("login")
+                        }
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.ExitToApp,
+                        contentDescription = "Cerrar Sesión",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(text = "Cerrar Sesión", color = Color.White, fontSize = 16.sp)
                 }
             }
         },
@@ -109,7 +207,7 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "¡BIENVENIDO!",
+                    text = "¡BIENVENIDO $username!",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(16.dp)
@@ -117,6 +215,7 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Muestra la hora actualizada
                 Text(
                     text = currentTime,
                     fontSize = 48.sp,
@@ -125,6 +224,7 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Botones de Entrada y Salida
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     modifier = Modifier
@@ -134,16 +234,18 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
                     EntryExitButton(
                         text = "Entrada",
                         backgroundColor = Color(0xFF4CAF50),
-                        onClick = { /* Acción Entrada */ })
+                        onClick = { /* Acción Entrada */ }
+                    )
                     EntryExitButton(
                         text = "Salida",
                         backgroundColor = Color(0xFFF44336),
-                        onClick = { /* Acción Salida */ })
+                        onClick = { /* Acción Salida */ }
+                    )
                 }
             }
         },
         bottomBar = {
-            BottomNavigationBar(navController)
+            BottomNavigationBar(navController = navController)
         }
     )
 }
@@ -160,9 +262,3 @@ fun EntryExitButton(text: String, backgroundColor: Color, onClick: () -> Unit) {
         Text(text)
     }
 }
-
-
-data class BottomNavItem(
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
-    val label: String
-)

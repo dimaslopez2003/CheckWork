@@ -1,151 +1,308 @@
+package com.example.checkwork.Home
+
 import android.annotation.SuppressLint
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.Color.Companion.Red
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.checkwork.data.model.AuthManager
+import com.example.checkwork.Navigation.BottomNavigationBar
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import kotlinx.coroutines.launch
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.auth.FirebaseAuth
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
-fun RegisterScreen(navController: NavHostController) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var username by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    var emailError by remember { mutableStateOf(false) }
-    var passwordError by remember { mutableStateOf(false) }
-    var usernameError by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    var showDialog by remember { mutableStateOf(false) }
-    val authManager = AuthManager()
+fun PantallaRegistro(navController: NavHostController, username: String?) {
+
+    val systemUiController = rememberSystemUiController()
+    systemUiController.setSystemBarsColor(color = Color(0xFF0056E0))
+
+    val scaffoldState = rememberScaffoldState()
+    val coroutineScope = rememberCoroutineScope()
+
+    // Firestore instance and user ID
+    val db = FirebaseFirestore.getInstance()
+    val userId = FirebaseAuth.getInstance().currentUser?.uid
+    var comentario by remember { mutableStateOf("") }
 
     Scaffold(
+        scaffoldState = scaffoldState,
         topBar = {
             TopAppBar(
-                modifier = Modifier.fillMaxWidth(),
-                title = { Text("Registro", color = Color.White) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF0056E0)
-                ),
+                title = { Text("WorkCheckApp", color = Color.White) },
+                backgroundColor = Color(0xFF0056E0),
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    IconButton(onClick = {
+                        coroutineScope.launch {
+                            scaffoldState.drawerState.open()
+                        }
+                    }) {
+                        Icon(Icons.Filled.Menu, contentDescription = "Menú", tint = Color.White)
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { }) {
+                        Icon(
+                            Icons.Filled.AccountCircle,
+                            contentDescription = "Profile",
+                            tint = Color.White
+                        )
                     }
                 }
             )
+        },
+        drawerContent = {
+            // Contenido del menú lateral (Hamburger Menu)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFF042159))
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "SISTEMAS",
+                    style = MaterialTheme.typography.h6.copy(color = Color.White),
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                Text(
+                    text = "USERNAME",
+                    style = MaterialTheme.typography.body1.copy(color = Color.White),
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // Perfil
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.AccountCircle,
+                        contentDescription = "Perfil",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(text = "Perfil", color = Color.White, fontSize = 16.sp)
+                        Text(text = "Agrega una foto para identificarte.", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                    }
+                }
+
+                // Registrar biométricos
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Fingerprint,
+                        contentDescription = "Registrar biométricos",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(text = "Registrar biométricos", color = Color.White, fontSize = 16.sp)
+                        Text(text = "Habilitar Iniciar sesión con tu huella dactilar.", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                    }
+                }
+
+                Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color.White.copy(alpha = 0.3f))
+
+                // Modo Oscuro
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Brightness2,
+                        contentDescription = "Modo Oscuro",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(text = "Modo Oscuro", color = Color.White, fontSize = 16.sp)
+                        Text(text = "Para descansar tu vista activa modo oscuro.", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                    }
+                }
+
+                // Asistencia
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Help,
+                        contentDescription = "Asistencia",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(text = "Asistencia", color = Color.White, fontSize = 16.sp)
+                        Text(text = "Soporte, ayuda y más.", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                    }
+                }
+
+                Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color.White.copy(alpha = 0.3f))
+
+                // Navegación al formulario
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                        .clickable {
+                            coroutineScope.launch { scaffoldState.drawerState.close() }
+                            navController.navigate("form")
+                        }
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Edit,
+                        contentDescription = "Formulario",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(text = "Formulario", color = Color.White, fontSize = 16.sp)
+                }
+
+                // Cerrar sesión
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                        .clickable {
+                            coroutineScope.launch { scaffoldState.drawerState.close() }
+                            navController.navigate("login")
+                        }
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.ExitToApp,
+                        contentDescription = "Cerrar Sesión",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(text = "Cerrar Sesión", color = Color.White, fontSize = 16.sp)
+                }
+            }
         },
         content = {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .background(Color(0xFFE0F7FA)),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                // Campo de email
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = {
-                        email = it
-                        emailError = false
-                    },
-                    label = { Text(text = "Email") },
-                    modifier = Modifier.fillMaxWidth(),
-                    isError = emailError
+                Text(
+                    text = "¡BIENVENIDO, $username!",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(16.dp)
                 )
-                if (emailError) {
-                    Text(text = "El email es obligatorio", color = Red, style = MaterialTheme.typography.bodySmall)
-                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = {
-                        password = it
-                        passwordError = false
-                    },
-                    label = { Text(text = "Contraseña") },
-                    placeholder = { Text(text = "Al menos 8 caracteres") },
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    trailingIcon = {
-                        val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(imageVector = image, contentDescription = if (passwordVisible) "Hide password" else "Show password")
-                        }
-                    },
-                    isError = passwordError
+                // Campo para comentario
+                TextField(
+                    value = comentario,
+                    onValueChange = { comentario = it },
+                    label = { Text("Comentarios") },
+                    modifier = Modifier.fillMaxWidth().padding(16.dp)
                 )
-                if (passwordError) {
-                    Text(text = "La contraseña es obligatoria", color = Red, style = MaterialTheme.typography.bodySmall)
-                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                OutlinedTextField(
-                    value = username,
-                    onValueChange = {
-                        username = it
-                        usernameError = false
-                    },
-                    label = { Text(text = "Nombre de usuario") },
-                    modifier = Modifier.fillMaxWidth(),
-                    isError = usernameError
-                )
-                if (usernameError) {
-                    Text(text = "El nombre de usuario es obligatorio", color = Red, style = MaterialTheme.typography.bodySmall)
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-
-                Button(onClick = {
-                    emailError = email.isEmpty()
-                    passwordError = password.isEmpty()
-                    usernameError = username.isEmpty()
-
-                    if (!emailError && !passwordError && !usernameError) {
-                        authManager.registerUserWithEmailAndPassword(email, password, username) { success, errorMessage ->
-                            if (success) {
-                                navController.navigate("home")
-                            } else {
-                                showDialog = true
-                            }
-                        }
-                    }
-                }) {
-                    Text(text = "Registrar")
-                }
-
-                if (showDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showDialog = false },
-                        confirmButton = {
-                            TextButton(onClick = { showDialog = false }) {
-                                Text("OK")
+                // Botones de Entrada y Salida
+                Row(
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Button(
+                        modifier = Modifier.weight(1f).padding(8.dp),
+                        onClick = {
+                            coroutineScope.launch {
+                                if (userId != null) {
+                                    registrarEntradaSalida(
+                                        db = db,
+                                        userId = userId,
+                                        tipo = "entrada",
+                                        comentario = comentario
+                                    )
+                                }
                             }
                         },
-                        title = { Text("Error en el registro") },
-                        text = { Text(errorMessage ?: "Ha ocurrido un error desconocido") }
-                    )
+                        colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50))
+                    ) {
+                        Text("Registrar Entrada")
+                    }
+
+                    Button(
+                        modifier = Modifier.weight(1f).padding(8.dp),
+                        onClick = {
+                            coroutineScope.launch {
+                                if (userId != null) {
+                                    registrarEntradaSalida(
+                                        db = db,
+                                        userId = userId,
+                                        tipo = "salida",
+                                        comentario = comentario
+                                    )
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFF44336))
+                    ) {
+                        Text("Registrar Salida")
+                    }
                 }
             }
+        },
+        bottomBar = {
+            BottomNavigationBar(navController = navController)
         }
     )
+}
+
+fun registrarEntradaSalida(
+    db: FirebaseFirestore,
+    userId: String,
+    tipo: String,
+    comentario: String
+) {
+    val data = hashMapOf(
+        "tipo" to tipo,
+        "timestamp" to System.currentTimeMillis(),
+        "comentario" to comentario
+    )
+
+    db.collection("usuarios")
+        .document(userId)
+        .collection("registros")
+        .add(data)
+        .addOnSuccessListener {
+            println("Registro de $tipo guardado exitosamente.")
+        }
+        .addOnFailureListener { e ->
+            println("Error al guardar registro de $tipo: ${e.message}")
+        }
 }
