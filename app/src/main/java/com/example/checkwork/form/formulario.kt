@@ -6,10 +6,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -38,7 +41,6 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
     var estado by remember { mutableStateOf("") }
     var pais by remember { mutableStateOf("") }
     var rfc by remember { mutableStateOf("") }
-    var nombreUsuario by remember { mutableStateOf("") }
     var rol by remember { mutableStateOf("Empleado") }
 
     val db = Firebase.firestore
@@ -47,7 +49,16 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Registro de Empresa") }
+                modifier = Modifier.fillMaxWidth(),
+                title = { Text("Registra tu empresa", color = Color.White) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF0056E0)
+                ),
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    }
+                }
             )
         },
         content = {
@@ -129,13 +140,6 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Campo Nombre de Usuario
-                TextField(
-                    value = nombreUsuario,
-                    onValueChange = { nombreUsuario = it },
-                    label = { Text("Nombre de Usuario") },
-                    modifier = Modifier.fillMaxWidth()
-                )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -169,24 +173,6 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                         "rfc" to rfc
                     )
 
-                    val userData = hashMapOf(
-                        "username" to nombreUsuario,
-                        "rol" to rol
-                    )
-
-                    val uid = authManager.getCurrentUser()?.uid  // Obtener el UID del usuario autenticado
-                    uid?.let {
-                        db.collection("empresa").document("datos_empresas")
-                            .set(empresaData)
-                            .addOnSuccessListener {
-                                db.collection("users").document(uid)
-                                    .update(userData as Map<String, Any>)
-                                    .addOnSuccessListener {
-                                        // Redirigir a home después del registro
-                                        navController.navigate("home")
-                                    }
-                            }
-                    }
                 }) {
                     Text(text = "Registrar Empresa")
                 }

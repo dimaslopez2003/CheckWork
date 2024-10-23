@@ -1,12 +1,20 @@
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.LineHeightStyle
-import androidx.compose.ui.text.style.LineHeightStyle.Alignment.Companion
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color.Companion.Red
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.navigation.NavHostController
 import com.example.checkwork.data.model.AuthManager
 
@@ -17,6 +25,10 @@ fun RegisterScreen(navController: NavHostController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var emailError by remember { mutableStateOf(false) }
+    var passwordError by remember { mutableStateOf(false) }
+    var usernameError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showDialog by remember { mutableStateOf(false) }
     val authManager = AuthManager()
@@ -24,7 +36,16 @@ fun RegisterScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Registro") }
+                modifier = Modifier.fillMaxWidth(),
+                title = { Text("Registro", color = Color.White) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF0056E0)
+                ),
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    }
+                }
             )
         },
         content = {
@@ -35,46 +56,83 @@ fun RegisterScreen(navController: NavHostController) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Campos de entrada para el email, contraseña y nombre de usuario
+                // Campo de email
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { email = it },
+                    onValueChange = {
+                        email = it
+                        emailError = false
+                    },
                     label = { Text(text = "Email") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = emailError
                 )
+                if (emailError) {
+                    Text(text = "El email es obligatorio", color = Red, style = MaterialTheme.typography.bodySmall)
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { password = it },
+                    onValueChange = {
+                        password = it
+                        passwordError = false
+                    },
                     label = { Text(text = "Contraseña") },
-                    modifier = Modifier.fillMaxWidth()
+                    placeholder = { Text(text = "Al menos 8 caracteres") },
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    trailingIcon = {
+                        val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(imageVector = image, contentDescription = if (passwordVisible) "Hide password" else "Show password")
+                        }
+                    },
+                    isError = passwordError
                 )
+                if (passwordError) {
+                    Text(text = "La contraseña es obligatoria", color = Red, style = MaterialTheme.typography.bodySmall)
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
                     value = username,
-                    onValueChange = { username = it },
+                    onValueChange = {
+                        username = it
+                        usernameError = false
+                    },
                     label = { Text(text = "Nombre de usuario") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = usernameError
                 )
+                if (usernameError) {
+                    Text(text = "El nombre de usuario es obligatorio", color = Red, style = MaterialTheme.typography.bodySmall)
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Botón para registrar al usuario
+
                 Button(onClick = {
-                    authManager.registerUserWithEmailAndPassword(email, password, username) { success, errorMessage ->
-                        if (success) {
-                            navController.navigate("home")  // Redirigir al home después del registro
-                        } else {
-                            showDialog = true
+                    emailError = email.isEmpty()
+                    passwordError = password.isEmpty()
+                    usernameError = username.isEmpty()
+
+                    if (!emailError && !passwordError && !usernameError) {
+                        authManager.registerUserWithEmailAndPassword(email, password, username) { success, errorMessage ->
+                            if (success) {
+                                navController.navigate("home")
+                            } else {
+                                showDialog = true
+                            }
                         }
                     }
                 }) {
                     Text(text = "Registrar")
                 }
+
                 if (showDialog) {
                     AlertDialog(
                         onDismissRequest = { showDialog = false },
