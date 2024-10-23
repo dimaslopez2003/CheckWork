@@ -26,16 +26,16 @@ fun BottomNavigationBar(navController: NavHostController) {
             BottomNavItem(Icons.Default.List, "Registros")
         )
 
-        items.forEachIndexed { index, item ->
+        items.forEach { item ->
             BottomNavigationItem(
                 icon = { Icon(item.icon, contentDescription = item.label, tint = Color.White) },
                 label = { Text(item.label, color = Color.White) },
-                selected = false,  // Puedes implementar la lógica para el ítem seleccionado
+                selected = false,  // Implementa la lógica para manejar el ítem seleccionado
                 onClick = {
                     when (item.label) {
-                        "Calendario" -> navController.navigate("calendario")
+                        "Calendario" -> navController.navigate("calendar")
                         "Home" -> navController.navigate("home")
-                        "Registros" -> navController.navigate("registros")
+                        "Registros" -> navController.navigate("register")  // Navegación a la vista de Registros
                     }
                 }
             )

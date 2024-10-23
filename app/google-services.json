@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "659046565232",
+    "project_id": "checkwork-7a073",
+    "storage_bucket": "checkwork-7a073.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:659046565232:android:1a5f05450463a4aa517bb5",
+        "android_client_info": {
+          "package_name": "com.example.checkwork"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhT-XkR2iZOi3Uy7Jvz3afMo0z54wUmqg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

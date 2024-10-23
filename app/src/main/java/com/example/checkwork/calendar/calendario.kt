@@ -1,128 +1,169 @@
-package com.example.checkwork.Calendario
-
-import android.os.Build
-import android.widget.Toast
-import androidx.annotation.RequiresApi
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import com.example.checkwork.Navigation.BottomNavigationBar
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import java.util.*
 
-@RequiresApi(Build.VERSION_CODES.O)
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
-fun CalendarioScreen(navController: NavHostController) {
-    val currentMonth = remember { mutableStateOf(LocalDate.now()) }
-    val selectedDate = remember { mutableStateOf<LocalDate?>(null) }
-    val coroutineScope = rememberCoroutineScope()
+fun CalendarView(navController: NavHostController) {
+    val systemUiController = rememberSystemUiController()
+    systemUiController.setSystemBarsColor(color = Color(0xFF0056E0))
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFE0F7FA))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Calendario",
-            fontSize = 24.sp,
-            color = Color(0xFF0056E0),
-            modifier = Modifier.padding(16.dp)
-        )
+    val calendar = Calendar.getInstance()
+    var month by remember { mutableStateOf(calendar.get(Calendar.MONTH)) }
+    var year by remember { mutableStateOf(calendar.get(Calendar.YEAR)) }
+    val days = getDaysInMonth(month, year)
+    val currentDay = calendar.get(Calendar.DAY_OF_MONTH)
 
-        // Mostrar el mes y los botones de navegación
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            IconButton(onClick = {
-                coroutineScope.launch {
-                    currentMonth.value = currentMonth.value.minusMonths(1)
+    var selectedDay by remember { mutableStateOf(currentDay) }  // Día seleccionado
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Calendario", color = Color.White) },
+                backgroundColor = Color(0xFF0056E0),
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {  // Navegar hacia atrás
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Regresar", tint = Color.White)
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { }) {
+                        Icon(Icons.Default.ArrowForward, contentDescription = "Next", tint = Color.White)
+                    }
                 }
-            }) {
-                Text(text = "<", fontSize = 24.sp, color = Color(0xFF0056E0))
-            }
-
-            Text(
-                text = currentMonth.value.format(DateTimeFormatter.ofPattern("MMMM yyyy")),
-                fontSize = 18.sp,
-                color = Color(0xFF0056E0)
             )
+        },
+        bottomBar = {
+            BottomNavigationBar(navController = navController)
+        },
+        content = {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFFE0F7FA)),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                // Cabecera del calendario
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    IconButton(onClick = {
+                        if (month == 0) {
+                            month = 11
+                            year--
+                        } else {
+                            month--
+                        }
+                    }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Mes anterior")
+                    }
 
-            IconButton(onClick = {
-                coroutineScope.launch {
-                    currentMonth.value = currentMonth.value.plusMonths(1)
+                    Text(
+                        text = "${getMonthName(month)} $year",
+                        fontSize = 24.sp,
+                        modifier = Modifier.align(Alignment.CenterVertically)
+                    )
+
+                    IconButton(onClick = {
+                        if (month == 11) {
+                            month = 0
+                            year++
+                        } else {
+                            month++
+                        }
+                    }) {
+                        Icon(Icons.Default.ArrowForward, contentDescription = "Mes siguiente")
+                    }
                 }
-            }) {
-                Text(text = ">", fontSize = 24.sp, color = Color(0xFF0056E0))
+
+                // Días del calendario
+                val firstDayOfWeek = calendar.apply {
+                    set(Calendar.DAY_OF_MONTH, 1)
+                }.get(Calendar.DAY_OF_WEEK) - 1
+
+                for (row in 0 until 6) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        for (col in 0..6) {
+                            val dayIndex = row * 7 + col - firstDayOfWeek
+                            if (dayIndex >= 0 && dayIndex < days.size) {
+                                val day = days[dayIndex]
+                                ClickableText(
+                                    text = AnnotatedString(day.toString()),
+                                    style = TextStyle(
+                                        color = when {
+                                            day == currentDay && calendar.get(Calendar.MONTH) == month && calendar.get(Calendar.YEAR) == year -> Color.Red
+                                            day == selectedDay -> Color.Blue  // Resaltar el día seleccionado
+                                            else -> Color.Black
+                                        },
+                                        textAlign = TextAlign.Center
+                                    ),
+                                    onClick = {
+                                        selectedDay = day  // Seleccionar el día
+                                    },
+                                    modifier = Modifier
+                                        .padding(8.dp)
+                                        .weight(1f)
+                                )
+                            } else {
+                                Spacer(modifier = Modifier
+                                    .padding(8.dp)
+                                    .weight(1f))
+                            }
+                        }
+                    }
+                }
             }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Mostrar el calendario con los días del mes
-        LazyColumn(modifier = Modifier.fillMaxWidth()) {
-            val daysInMonth = getDaysInMonth(currentMonth.value)
-            items(daysInMonth) { day ->
-                DayItem(day = day, selectedDate = selectedDate.value) {
-                    selectedDate.value = it
-                    Toast.makeText(navController.context, "Fecha seleccionada: $it", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        selectedDate.value?.let {
-            Text(text = "Fecha seleccionada: ${it.format(DateTimeFormatter.ofPattern("dd MMMM yyyy"))}", fontSize = 18.sp)
-        }
-    }
+    )
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
-@Composable
-fun DayItem(day: LocalDate, selectedDate: LocalDate?, onClick: (LocalDate) -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-            .background(if (day == selectedDate) Color(0xFF4CAF50) else Color.White)
-            .padding(16.dp)
-            .clickable {
-                onClick(day)
-            },
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = day.dayOfMonth.toString(),
-            color = if (day == selectedDate) Color.White else Color.Black,
-            fontSize = 18.sp
-        )
-    }
+fun getDaysInMonth(month: Int, year: Int): List<Int> {
+    val calendar = Calendar.getInstance()
+    calendar.set(Calendar.MONTH, month)
+    calendar.set(Calendar.YEAR, year)
+    val daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+    return (1..daysInMonth).toList()
 }
 
-// Helper function to get the days of the current month
-@RequiresApi(Build.VERSION_CODES.O)
-fun getDaysInMonth(date: LocalDate): List<LocalDate> {
-    val firstDayOfMonth = date.withDayOfMonth(1)
-    val daysInMonth = mutableListOf<LocalDate>()
-    val lastDay = date.lengthOfMonth()
-
-    for (day in 1..lastDay) {
-        daysInMonth.add(firstDayOfMonth.withDayOfMonth(day))
+fun getMonthName(month: Int): String {
+    return when (month) {
+        0 -> "Enero"
+        1 -> "Febrero"
+        2 -> "Marzo"
+        3 -> "Abril"
+        4 -> "Mayo"
+        5 -> "Junio"
+        6 -> "Julio"
+        7 -> "Agosto"
+        8 -> "Septiembre"
+        9 -> "Octubre"
+        10 -> "Noviembre"
+        11 -> "Diciembre"
+        else -> ""
     }
-
-    return daysInMonth
 }

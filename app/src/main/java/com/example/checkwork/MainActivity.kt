@@ -1,6 +1,6 @@
 package com.example.checkwork
 
-import RegisterScreen
+import CalendarView
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,9 +21,10 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 NavHost(navController = navController, startDestination = "login") {
                     composable(route = "login") { LoginScreen(navController) }
-                    composable(route = "register") { RegisterScreen(navController) }
                     composable(route = "home") { PantallaPrincipal(navController, "") }
                     composable(route = "form") { FormularioEmpresaScreen(navController) }
+                    composable(route = "calendar") { CalendarView(navController) }
+
                 }
             }
         }
