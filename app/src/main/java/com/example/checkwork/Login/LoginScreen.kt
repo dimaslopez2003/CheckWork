@@ -58,7 +58,9 @@ fun LoginScreen(navController: NavHostController) {
                     Icon(
                         imageVector = Icons.Filled.AccountCircle,
                         contentDescription = "Avatar",
-                        modifier = Modifier.size(100.dp).padding(8.dp),
+                        modifier = Modifier
+                            .size(100.dp)
+                            .padding(8.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
 
@@ -156,7 +158,9 @@ fun LoginScreen(navController: NavHostController) {
                     // Botón de registro
                     OutlinedButton(
                         onClick = { navController.navigate("register") },
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
                         colors = ButtonDefaults.outlinedButtonColors()
                     ) {
                         Text(text = "Registro", color = MaterialTheme.colorScheme.primary)
