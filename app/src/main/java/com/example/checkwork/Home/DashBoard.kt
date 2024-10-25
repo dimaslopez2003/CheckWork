@@ -18,6 +18,9 @@ import androidx.navigation.NavHostController
 import com.example.checkwork.FunctionTime.getCurrentTime
 import com.example.checkwork.Navigation.BottomNavigationBar
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -28,9 +31,15 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
     val systemUiController = rememberSystemUiController()
     systemUiController.setSystemBarsColor(color = Color(0xFF0056E0))
 
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
+    val storage = FirebaseStorage.getInstance()
+
+    var username by remember { mutableStateOf("") }
+
     var currentTime by remember { mutableStateOf(getCurrentTime()) }
 
-    // Actualiza el tiempo cada segundo
+
     LaunchedEffect(Unit) {
         while (true) {
             delay(1000L)
@@ -92,6 +101,12 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp)
+                        .clickable {
+                            coroutineScope.launch {
+                                scaffoldState.drawerState.close()
+                                navController.navigate("perfil")
+                            }
+                        }
                 ) {
                     Icon(
                         imageVector = Icons.Filled.AccountCircle,
@@ -104,15 +119,6 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
                         Text(text = "Perfil", color = Color.White, fontSize = 16.sp)
                         Text(text = "Agrega una foto para identificarte.", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
                     }
-                }
-
-                // Registrar biométricos
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                )
-                {
                 }
 
                 Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color.White.copy(alpha = 0.3f))

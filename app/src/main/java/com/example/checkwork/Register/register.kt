@@ -1,5 +1,3 @@
-package com.example.checkwork.Register.register
-
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -24,7 +22,6 @@ import com.example.checkwork.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
-import java.util.*
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
@@ -35,9 +32,11 @@ fun RegisterScreen(navController: NavHostController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
+    var employeeId by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
-    var selectedRole by remember { mutableStateOf("Empleado") } // El rol seleccionado
+    var selectedRole by remember { mutableStateOf("Empleado") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
 
     val scaffoldState = rememberScaffoldState()
     val coroutineScope = rememberCoroutineScope()
@@ -50,11 +49,7 @@ fun RegisterScreen(navController: NavHostController) {
                 backgroundColor = Color(0xFF0056E0),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = "Regresar",
-                            tint = Color.White
-                        )
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Regresar", tint = Color.White)
                     }
                 }
             )
@@ -66,18 +61,26 @@ fun RegisterScreen(navController: NavHostController) {
                     .background(Color(0xFFE0F7FA))
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Top
             ) {
+
                 Icon(
                     painter = painterResource(id = R.drawable.ic_launcher_foreground),
                     contentDescription = "Logo de la app",
                     modifier = Modifier.size(120.dp)
                 )
-                Text(
-                    text = "Crear una cuenta",
-                    fontSize = 24.sp,
-                    modifier = Modifier.padding(16.dp)
+
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(text = "Crear una cuenta", fontSize = 24.sp, modifier = Modifier.padding(8.dp))
+
+                OutlinedTextField(
+                    value = employeeId,
+                    onValueChange = { employeeId = it },
+                    label = { Text("ID de Empleado/No.Nómina") },
+                    modifier = Modifier.fillMaxWidth()
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
                     value = username,
@@ -106,25 +109,19 @@ fun RegisterScreen(navController: NavHostController) {
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
-                        val image =
-                            if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                        val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                         IconButton(onClick = {
                             passwordVisible = !passwordVisible
                         }) {
-                            Icon(
-                                imageVector = image,
-                                contentDescription = if (passwordVisible) "Hide password" else "Show password"
-                            )
+                            Icon(imageVector = image, contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña")
                         }
                     }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(text = "Selecciona tu rol:", fontSize = 18.sp, color = Color(0xFF000000))
+                Text(text = "Selecciona tu rol:", fontSize = 18.sp, color = Color(0x00000000))
                 Spacer(modifier = Modifier.height(8.dp))
-
-                var expanded by remember { mutableStateOf(false) }
 
                 Box {
                     OutlinedButton(
@@ -132,7 +129,7 @@ fun RegisterScreen(navController: NavHostController) {
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.outlinedButtonColors(
                             backgroundColor = Color(0xFF0056E0),
-                            contentColor = Color.White // Color del texto dentro del botón
+                            contentColor = Color.White
                         )
                     ) {
                         Text(selectedRole)
@@ -158,13 +155,12 @@ fun RegisterScreen(navController: NavHostController) {
                     }
                 }
 
-
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
                     colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF0056E0)),
                     onClick = {
-                        if (email.isNotEmpty() && password.isNotEmpty() && username.isNotEmpty()) {
+                        if (email.isNotEmpty() && password.isNotEmpty() && username.isNotEmpty() && employeeId.isNotEmpty()) {
                             coroutineScope.launch {
                                 try {
                                     auth.createUserWithEmailAndPassword(email, password)
@@ -177,6 +173,7 @@ fun RegisterScreen(navController: NavHostController) {
                                                     val userMap = hashMapOf(
                                                         "username" to username,
                                                         "email" to email,
+                                                        "employeeId" to employeeId,
                                                         "rol" to selectedRole
                                                     )
 
@@ -185,9 +182,7 @@ fun RegisterScreen(navController: NavHostController) {
                                                         .set(userMap)
                                                         .addOnSuccessListener {
                                                             if (selectedRole == "Administrador") {
-                                                                // Generar código de empresa si es administrador
-                                                                val companyCode =
-                                                                    generateCompanyCode()
+                                                                val companyCode = generateCompanyCode()
                                                                 val companyMap = hashMapOf(
                                                                     "companyCode" to companyCode
                                                                 )
@@ -196,33 +191,26 @@ fun RegisterScreen(navController: NavHostController) {
                                                                     .set(companyMap)
                                                                     .addOnSuccessListener {
                                                                         coroutineScope.launch {
-                                                                            scaffoldState.snackbarHostState.showSnackbar(
-                                                                                "Registro exitoso. Código de empresa: $companyCode"
-                                                                            )
+                                                                            scaffoldState.snackbarHostState.showSnackbar("Registro exitoso. Código de empresa: $companyCode")
                                                                             navController.navigate("login")
                                                                         }
                                                                     }
                                                                     .addOnFailureListener {
-                                                                        errorMessage =
-                                                                            "Error al generar el código de empresa"
+                                                                        errorMessage = "Error al generar el código de empresa"
                                                                     }
                                                             } else {
                                                                 coroutineScope.launch {
-                                                                    scaffoldState.snackbarHostState.showSnackbar(
-                                                                        "Registro exitoso"
-                                                                    )
+                                                                    scaffoldState.snackbarHostState.showSnackbar("Registro exitoso")
                                                                     navController.navigate("login")
                                                                 }
                                                             }
                                                         }
                                                         .addOnFailureListener {
-                                                            errorMessage =
-                                                                "Error al guardar el usuario"
+                                                            errorMessage = "Error al guardar el usuario"
                                                         }
                                                 }
                                             } else {
-                                                errorMessage =
-                                                    task.exception?.message ?: "Error al registrar"
+                                                errorMessage = task.exception?.message ?: "Error al registrar"
                                             }
                                         }
                                 } catch (e: Exception) {
@@ -243,12 +231,10 @@ fun RegisterScreen(navController: NavHostController) {
                     Text(text = errorMessage, color = Color.Red)
                 }
             }
-
         }
     )
 }
 
-// Función para generar un código de empresa aleatorio
 fun generateCompanyCode(): String {
     val characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     return (1..8)
