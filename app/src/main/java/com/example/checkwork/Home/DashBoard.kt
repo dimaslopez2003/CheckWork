@@ -1,9 +1,11 @@
 package com.example.checkwork.Home
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -15,8 +17,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import coil.compose.rememberImagePainter
 import com.example.checkwork.FunctionTime.getCurrentTime
 import com.example.checkwork.Navigation.BottomNavigationBar
+import com.example.checkwork.ui.theme.CheckWorkTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -36,11 +40,21 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
     val storage = FirebaseStorage.getInstance()
 
     var username by remember { mutableStateOf("") }
-
     var currentTime by remember { mutableStateOf(getCurrentTime()) }
-
+    var isDarkModeEnabled by remember { mutableStateOf(false) }
+    var profileImageUrl by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
+        // Obtener la URL de la imagen de perfil desde Firestore o Storage
+        val userId = auth.currentUser?.uid
+        if (userId != null) {
+            db.collection("users").document(userId).get()
+                .addOnSuccessListener { document ->
+                    profileImageUrl = document.getString("profileImageUrl")
+                }
+        }
+
+        // Actualizar la hora cada segundo
         while (true) {
             delay(1000L)
             currentTime = getCurrentTime()
@@ -50,210 +64,239 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
     val scaffoldState = rememberScaffoldState()
     val coroutineScope = rememberCoroutineScope()
 
-    Scaffold(
-        scaffoldState = scaffoldState,
-        topBar = {
-            TopAppBar(
-                title = { Text("WorkCheckApp", color = Color.White) },
-                backgroundColor = Color(0xFF0056E0),
-                navigationIcon = {
-                    IconButton(onClick = {
-                        coroutineScope.launch {
-                            scaffoldState.drawerState.open()
+    CheckWorkTheme(darkTheme = isDarkModeEnabled) {
+        Scaffold(
+            scaffoldState = scaffoldState,
+            topBar = {
+                TopAppBar(
+                    title = { Text("WorkCheckApp", color = Color.White) },
+                    backgroundColor = Color(0xFF0056E0),
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            coroutineScope.launch {
+                                scaffoldState.drawerState.open()
+                            }
+                        }) {
+                            Icon(Icons.Filled.Menu, contentDescription = "Menú", tint = Color.White)
                         }
-                    }) {
-                        Icon(Icons.Filled.Menu, contentDescription = "Menú", tint = Color.White)
+                    },
+                    actions = {
+                        // Mostrar la imagen de perfil si está disponible
+                        if (profileImageUrl != null) {
+                            Image(
+                                painter = rememberImagePainter(profileImageUrl),
+                                contentDescription = "Foto de perfil",
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .padding(8.dp)
+                                    .background(Color.Gray, CircleShape)
+                                    .clickable { /* Acción cuando se haga clic en la imagen */ }
+                            )
+                        } else {
+                            // Mostrar icono predeterminado si no hay imagen
+                            Icon(
+                                Icons.Filled.AccountCircle,
+                                contentDescription = "Imagen predeterminada",
+                                tint = Color.White,
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .padding(8.dp)
+                            )
+                        }
                     }
-                },
-                actions = {
-                    IconButton(onClick = { }) {
+                )
+            },
+            drawerContent = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFF042159))
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "SISTEMAS",
+                        style = MaterialTheme.typography.h6.copy(color = Color.White),
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    Text(
+                        text = "USERNAME",
+                        style = MaterialTheme.typography.body1.copy(color = Color.White),
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    // Perfil
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                            .clickable {
+                                coroutineScope.launch {
+                                    scaffoldState.drawerState.close()
+                                    navController.navigate("perfil")
+                                }
+                            }
+                    ) {
                         Icon(
-                            Icons.Filled.Brightness2,
-                            contentDescription = "DarkMode",
-                            tint = Color.White
+                            imageVector = Icons.Filled.AccountCircle,
+                            contentDescription = "Perfil",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(text = "Perfil", color = Color.White, fontSize = 16.sp)
+                            Text(text = "Agrega una foto para identificarte.", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                        }
+                    }
+
+                    Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color.White.copy(alpha = 0.3f))
+
+                    // Modo Oscuro
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Brightness2,
+                            contentDescription = "Modo Oscuro",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = "Modo Oscuro", color = Color.White, fontSize = 16.sp)
+                            Text(text = "Para descansar tu vista activa modo oscuro.", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                        }
+                        Switch(
+                            checked = isDarkModeEnabled,
+                            onCheckedChange = {
+                                isDarkModeEnabled = it
+                            },
+                            colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF0056E0))
+                        )
+                    }
+
+                    // Asistencia
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                            .clickable {
+                                coroutineScope.launch {
+                                    scaffoldState.drawerState.close()
+                                    navController.navigate("support")
+                                }
+                            }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Help,
+                            contentDescription = "Asistencia",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(text = "Asistencia", color = Color.White, fontSize = 16.sp)
+                            Text(text = "Soporte, ayuda y más.", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                        }
+                    }
+
+                    Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color.White.copy(alpha = 0.3f))
+
+                    // Navegación al formulario
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                            .clickable {
+                                coroutineScope.launch { scaffoldState.drawerState.close() }
+                                navController.navigate("form")
+                            }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Edit,
+                            contentDescription = "Formulario",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(text = "Formulario", color = Color.White, fontSize = 16.sp)
+                    }
+
+                    // Cerrar sesión
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                            .clickable {
+                                coroutineScope.launch { scaffoldState.drawerState.close() }
+                                navController.navigate("login")
+                            }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.ExitToApp,
+                            contentDescription = "Cerrar Sesión",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(text = "Cerrar Sesión", color = Color.White, fontSize = 16.sp)
+                    }
+                }
+            },
+            content = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0xFFE0F7FA)),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "¡BIENVENIDO $username!",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(16.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Muestra la hora actualizada
+                    Text(
+                        text = currentTime,
+                        fontSize = 48.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Botones de Entrada y Salida
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        EntryExitButton(
+                            text = "Entrada",
+                            backgroundColor = Color(0xFF4CAF50),
+                            onClick = { /* Acción Entrada */ }
+                        )
+                        EntryExitButton(
+                            text = "Salida",
+                            backgroundColor = Color(0xFFF44336),
+                            onClick = { /* Acción Salida */ }
                         )
                     }
                 }
-            )
-        },
-        drawerContent = {
-            // Contenido del menú lateral (Hamburger Menu)
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFF042159))
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = "SISTEMAS",
-                    style = MaterialTheme.typography.h6.copy(color = Color.White),
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                Text(
-                    text = "Dimas Arturo López Montalvo",
-                    style = MaterialTheme.typography.body1.copy(color = Color.White),
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                // Perfil
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                        .clickable {
-                            coroutineScope.launch {
-                                scaffoldState.drawerState.close()
-                                navController.navigate("perfil")
-                            }
-                        }
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.AccountCircle,
-                        contentDescription = "Perfil",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text(text = "Perfil", color = Color.White, fontSize = 16.sp)
-                        Text(text = "Agrega una foto para identificarte.", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
-                    }
-                }
-
-                Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color.White.copy(alpha = 0.3f))
-
-                // Modo Oscuro
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Brightness2,
-                        contentDescription = "Modo Oscuro",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text(text = "Modo Oscuro", color = Color.White, fontSize = 16.sp)
-                        Text(text = "Para descansar tu vista activa modo oscuro.", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
-                    }
-                }
-
-                // Asistencia
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Help,
-                        contentDescription = "Asistencia",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text(text = "Asistencia", color = Color.White, fontSize = 16.sp)
-                        Text(text = "Soporte, ayuda y más.", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
-                    }
-                }
-
-                Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color.White.copy(alpha = 0.3f))
-
-                // Navegación al formulario
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                        .clickable {
-                            coroutineScope.launch { scaffoldState.drawerState.close() }
-                            navController.navigate("form")
-                        }
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Edit,
-                        contentDescription = "Formulario",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Text(text = "Formulario", color = Color.White, fontSize = 16.sp)
-                }
-
-                // Cerrar sesión
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                        .clickable {
-                            coroutineScope.launch { scaffoldState.drawerState.close() }
-                            navController.navigate("login")
-                        }
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.ExitToApp,
-                        contentDescription = "Cerrar Sesión",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Text(text = "Cerrar Sesión", color = Color.White, fontSize = 16.sp)
-                }
+            },
+            bottomBar = {
+                BottomNavigationBar(navController = navController)
             }
-        },
-        content = {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFFE0F7FA)),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "¡BIENVENIDO $username!",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(16.dp)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Muestra la hora actualizada
-                Text(
-                    text = currentTime,
-                    fontSize = 48.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Botones de Entrada y Salida
-                Row(
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    EntryExitButton(
-                        text = "Entrada",
-                        backgroundColor = Color(0xFF4CAF50),
-                        onClick = { /* Acción Entrada */ }
-                    )
-                    EntryExitButton(
-                        text = "Salida",
-                        backgroundColor = Color(0xFFF44336),
-                        onClick = { /* Acción Salida */ }
-                    )
-                }
-            }
-        },
-        bottomBar = {
-            BottomNavigationBar(navController = navController)
-        }
-    )
+        )
+    }
 }
 
 @Composable
