@@ -90,10 +90,11 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
                                     .size(40.dp)
                                     .padding(8.dp)
                                     .background(Color.Gray, CircleShape)
-                                    .clickable { /* Acción cuando se haga clic en la imagen */ }
+                                    .clickable {
+                                        navController.navigate("perfil")
+                                    }
                             )
                         } else {
-                            // Mostrar icono predeterminado si no hay imagen
                             Icon(
                                 Icons.Filled.AccountCircle,
                                 contentDescription = "Imagen predeterminada",
@@ -217,12 +218,12 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Edit,
-                            contentDescription = "Formulario",
+                            contentDescription = "Registrar Empresa",
                             tint = Color.White,
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(16.dp))
-                        Text(text = "Formulario", color = Color.White, fontSize = 16.sp)
+                        Text(text = "Registrar Empresa", color = Color.White, fontSize = 16.sp)
                     }
 
                     // Cerrar sesión

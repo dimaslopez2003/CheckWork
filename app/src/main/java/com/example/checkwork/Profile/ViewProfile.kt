@@ -1,5 +1,6 @@
 package com.example.checkwork.Profile
 
+
 import android.Manifest
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
@@ -12,16 +13,20 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AssignmentInd
+import androidx.compose.material.icons.filled.CoPresent
+import androidx.compose.material.icons.filled.Diversity1
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Logout
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -122,13 +127,6 @@ fun ProfileScreen(navController: NavHostController) {
                         Icon(Icons.Filled.Logout, contentDescription = "Regresar", tint = Color.White)
                     }
                 },
-                actions = {
-                    if (role == "Administrador") {
-                        IconButton(onClick = { /* Lógica para compartir el código de empresa */ }) {
-                            Icon(Icons.Filled.Share, contentDescription = "Compartir Código de Empresa", tint = Color.White)
-                        }
-                    }
-                }
             )
         },
         content = {
@@ -139,106 +137,78 @@ fun ProfileScreen(navController: NavHostController) {
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Foto de perfil y botón de editar
-                Box(contentAlignment = Alignment.TopEnd) {
-                    if (profileImageUrl != null) {
-                        Image(
-                            painter = rememberImagePainter(profileImageUrl),
-                            contentDescription = "Foto de Perfil",
-                            modifier = Modifier.size(150.dp).clip(CircleShape)
-                        )
-                    } else if (bitmap != null) {
-                        Image(
-                            bitmap = bitmap!!.asImageBitmap(),
-                            contentDescription = "Foto de Perfil",
-                            modifier = Modifier.size(150.dp).clip(CircleShape)
-                        )
-                    } else {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                            contentDescription = "Foto de Perfil",
-                            modifier = Modifier
-                                .size(150.dp)
-                                .clip(CircleShape)
-                        )
-                    }
+                // Tarjeta de perfil
+                Card(
+                    backgroundColor = Color(0xFF0056E0),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    elevation = 8.dp
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Foto de perfil
+                        Box(contentAlignment = Alignment.BottomEnd) {
+                            if (profileImageUrl != null) {
+                                Image(
+                                    painter = rememberImagePainter(profileImageUrl),
+                                    contentDescription = "Foto de Perfil",
+                                    modifier = Modifier
+                                        .size(120.dp)
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else if (bitmap != null) {
+                                Image(
+                                    bitmap = bitmap!!.asImageBitmap(),
+                                    contentDescription = "Foto de Perfil",
+                                    modifier = Modifier
+                                        .size(120.dp)
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                                    contentDescription = "Foto de Perfil",
+                                    modifier = Modifier
+                                        .size(120.dp)
+                                        .clip(CircleShape)
+                                )
+                            }
 
-                    IconButton(onClick = { showDialog = true }) {
-                        Icon(Icons.Filled.Edit, contentDescription = "Editar Perfil", tint = Color(0xFF0056E0))
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "DEPARTAMENTO",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = Color.Black
-                )
-                Text(text = departamento, fontSize = 16.sp)
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "USERNAME",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = Color.Black
-                )
-                Text(text = username, fontSize = 16.sp)
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "ID DE EMPLEADO",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = Color.Black
-                )
-                Text(text = employeeId, fontSize = 16.sp)
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Estado de la huella digital
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "INICIO DE SESIÓN CON HUELLA",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = Color.Black
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (fingerprintEnabled) "ACTIVADO" else "DESACTIVADO",
-                        fontSize = 16.sp,
-                        color = if (fingerprintEnabled) Color.Green else Color.Red
-                    )
-                    Icon(
-                        imageVector = Icons.Filled.Fingerprint,
-                        contentDescription = "Estado de la Huella Digital",
-                        tint = Color.Black
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                if (role == "Administrador") {
-                    Text(
-                        text = "CÓDIGO DE EMPRESA",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = Color.Black
-                    )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = companyCode, fontSize = 16.sp)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        IconButton(onClick = {
-                            // Lógica para compartir el código de empresa
-                        }) {
-                            Icon(Icons.Filled.Share, contentDescription = "Compartir Código de Empresa", tint = Color(0xFF0056E0))
+                            IconButton(
+                                onClick = { showDialog = true },
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .padding(4.dp)
+                            ) {
+                                Icon(Icons.Filled.Edit, contentDescription = "Editar Perfil", tint = Color.White)
+                            }
                         }
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(text = departamento, fontSize = 16.sp, color = Color.White)
+                        Text(text = username, fontSize = 14.sp, color = Color.White)
                     }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    InfoItem(icon = Icons.Filled.AssignmentInd, label = "ID DE EMPLEADO", value = employeeId)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    InfoItem(icon = Icons.Filled.Fingerprint, label = "INICIO DE SESIÓN CON HUELLA", value = "", switchValue = fingerprintEnabled) {
+                        fingerprintEnabled = it
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    if (role == "Administrador") {
+                        InfoItem(icon = Icons.Filled.Diversity1, label = "CÓDIGO DE EMPRESA", value = companyCode)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    InfoItem(icon = Icons.Filled.CoPresent, label = "ROL", value = role)
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -266,7 +236,6 @@ fun ProfileScreen(navController: NavHostController) {
                         confirmButton = {
                             Row {
                                 TextButton(onClick = {
-                                    // Lógica para tomar una foto
                                     if (cameraPermissionGranted) {
                                         cameraLauncher.launch(null)
                                     } else {
@@ -277,7 +246,6 @@ fun ProfileScreen(navController: NavHostController) {
                                     Text("Tomar Foto")
                                 }
                                 TextButton(onClick = {
-                                    // Lógica para elegir una foto de la galería
                                     if (storagePermissionGranted) {
                                         galleryLauncher.launch("image/*")
                                     } else {
@@ -294,6 +262,28 @@ fun ProfileScreen(navController: NavHostController) {
             }
         }
     )
+}
+
+@Composable
+fun InfoItem(icon: ImageVector, label: String, value: String, switchValue: Boolean? = null, onSwitchChange: ((Boolean) -> Unit)? = null) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        Icon(imageVector = icon, contentDescription = label, modifier = Modifier.size(24.dp))
+        Spacer(modifier = Modifier.width(8.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = label, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.Black)
+            if (value.isNotEmpty()) {
+                Text(text = value, fontSize = 14.sp, color = Color.Gray)
+            }
+        }
+        if (switchValue != null && onSwitchChange != null) {
+            Switch(checked = switchValue, onCheckedChange = onSwitchChange)
+        }
+    }
 }
 
 fun uploadImageToFirebase(uri: Uri) {
