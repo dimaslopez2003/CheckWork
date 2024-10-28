@@ -20,10 +20,9 @@ class LoginActivity : ComponentActivity() {
                 val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
                 authManager.handleGoogleSignInResult(task) { success, _ ->
                     if (success) {
-                        // Aquí simplemente podrías realizar alguna acción local si es necesario
-                        // como mostrar un mensaje o continuar con alguna lógica, pero no la navegación
+
                     } else {
-                        // Manejar error de autenticación si es necesario
+
                     }
                 }
             }
