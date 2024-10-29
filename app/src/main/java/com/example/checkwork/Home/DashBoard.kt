@@ -1,6 +1,7 @@
 package com.example.checkwork.Home
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -40,6 +41,7 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
     val storage = FirebaseStorage.getInstance()
 
     var username by remember { mutableStateOf("") }
+    var departamento by remember { mutableStateOf("") }
     var currentTime by remember { mutableStateOf(getCurrentTime()) }
     var isDarkModeEnabled by remember { mutableStateOf(false) }
     var profileImageUrl by remember { mutableStateOf<String?>(null) }
@@ -51,10 +53,13 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
             db.collection("users").document(userId).get()
                 .addOnSuccessListener { document ->
                     profileImageUrl = document.getString("profileImageUrl")
+                    departamento = document.getString("departamento") ?: ""
+                    username = document.getString("username") ?: ""
                 }
+        }else{
+            Log.e("Firestore", "Error al obtener los datos")
         }
 
-        // Actualizar la hora cada segundo
         while (true) {
             delay(1000L)
             currentTime = getCurrentTime()
@@ -81,7 +86,6 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
                         }
                     },
                     actions = {
-                        // Mostrar la imagen de perfil si está disponible
                         if (profileImageUrl != null) {
                             Image(
                                 painter = rememberImagePainter(profileImageUrl),
@@ -115,13 +119,13 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = "SISTEMAS",
+                        text = departamento,
                         style = MaterialTheme.typography.h6.copy(color = Color.White),
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
                     Text(
-                        text = "USERNAME",
+                        text = username,
                         style = MaterialTheme.typography.body1.copy(color = Color.White),
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
@@ -206,7 +210,7 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
 
                     Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color.White.copy(alpha = 0.3f))
 
-                    // Navegación al formulario
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -264,7 +268,6 @@ fun PantallaPrincipal(navController: NavHostController, username: String?) {
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Muestra la hora actualizada
                     Text(
                         text = currentTime,
                         fontSize = 48.sp,

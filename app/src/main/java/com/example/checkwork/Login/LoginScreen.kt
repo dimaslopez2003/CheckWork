@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.navigation.NavHostController
 import com.example.checkwork.data.model.AuthManager
+import com.example.checkwork.forgot.ForgotPasswordScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -126,7 +127,7 @@ fun LoginScreen(navController: NavHostController) {
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    TextButton(onClick = {}) {
+                    TextButton(onClick = { navController.navigate("forgot_password") }) {
                         Text(
                             text = "¿Olvidaste tu contraseña\uD83E\uDD14?",
                             color = Color(0xFF000000),

@@ -9,12 +9,15 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AssignmentInd
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CoPresent
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Diversity1
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Fingerprint
@@ -51,8 +54,10 @@ fun ProfileScreen(navController: NavHostController) {
     var role by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var departamento by remember { mutableStateOf("") }
+    var phoneNumber by remember { mutableStateOf<Long?>(null) }
     var fingerprintEnabled by remember { mutableStateOf(true) }
     var showDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     var profileImageUrl by remember { mutableStateOf<String?>(null) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -61,7 +66,6 @@ fun ProfileScreen(navController: NavHostController) {
 
     val coroutineScope = rememberCoroutineScope()
 
-    // Solicitar permisos de cámara y almacenamiento
     val permissionsLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
         onResult = { permissions ->
@@ -88,6 +92,7 @@ fun ProfileScreen(navController: NavHostController) {
                     employeeId = document.getString("employeeId") ?: ""
                     role = document.getString("rol") ?: ""
                     profileImageUrl = document.getString("profileImageUrl")
+                    phoneNumber = document.getLong("phoneNumber")
                 }
 
             if (role == "Administrador") {
@@ -209,6 +214,23 @@ fun ProfileScreen(navController: NavHostController) {
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     InfoItem(icon = Icons.Filled.CoPresent, label = "ROL", value = role)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (phoneNumber != null) {
+                        InfoItem(
+                            icon = Icons.Filled.Call,
+                            label = "Número Telefónico",
+                            value = phoneNumber.toString(),
+                            onClick = { showDeleteDialog = true }
+                        )
+                    } else {
+                        InfoItem(
+                            icon = Icons.Filled.Call,
+                            label = "Agregar Número Telefónico",
+                            value = "",
+                            onClick = { navController.navigate("AddPhone") }
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -259,18 +281,58 @@ fun ProfileScreen(navController: NavHostController) {
                         }
                     )
                 }
+
+                if (showDeleteDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showDeleteDialog = false },
+                        title = { Text("Eliminar Número Telefónico") },
+                        text = { Text("¿Estás seguro de que deseas eliminar tu número de teléfono?") },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                deletePhoneNumber { success ->
+                                    if (success) {
+                                        phoneNumber = null // Actualiza en la UI
+                                    }
+                                    showDeleteDialog = false
+                                }
+                            }) {
+                                Text("Eliminar")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDeleteDialog = false }) {
+                                Text("Cancelar")
+                            }
+                        }
+                    )
+                }
             }
         }
     )
 }
 
+fun deletePhoneNumber(callback: (Boolean) -> Unit) {
+    val userId = FirebaseAuth.getInstance().currentUser?.uid
+    if (userId != null) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users").document(userId)
+            .update("phoneNumber", null)
+            .addOnSuccessListener { callback(true) }
+            .addOnFailureListener { callback(false) }
+    } else {
+        callback(false)
+    }
+}
 @Composable
-fun InfoItem(icon: ImageVector, label: String, value: String, switchValue: Boolean? = null, onSwitchChange: ((Boolean) -> Unit)? = null) {
+fun InfoItem(icon: ImageVector, label: String, value: String, switchValue: Boolean? = null, onClick: (() -> Unit)? = null, onSwitchChange: ((Boolean) -> Unit)? = null) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
+            .clickable { onClick?.invoke() }
+
+
     ) {
         Icon(imageVector = icon, contentDescription = label, modifier = Modifier.size(24.dp))
         Spacer(modifier = Modifier.width(8.dp))
