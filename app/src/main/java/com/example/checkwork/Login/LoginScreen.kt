@@ -3,7 +3,7 @@ package com.example.checkwork.Login.LoginScreen
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.AccessTimeFilled
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -16,8 +16,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color.Companion.Red
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.navigation.NavHostController
 import com.example.checkwork.data.model.AuthManager
+import com.example.checkwork.forgot.ForgotPasswordScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,7 +48,7 @@ fun LoginScreen(navController: NavHostController) {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(it),
-                color = MaterialTheme.colorScheme.background
+                color = Color(0xFFE0F7FA)
             ) {
                 Column(
                     modifier = Modifier
@@ -56,18 +58,20 @@ fun LoginScreen(navController: NavHostController) {
                     verticalArrangement = Arrangement.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.AccountCircle,
+                        imageVector = Icons.Filled.AccessTimeFilled,
                         contentDescription = "Avatar",
-                        modifier = Modifier.size(100.dp).padding(8.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                        modifier = Modifier
+                            .size(100.dp)
+                            .padding(8.dp),
+                        tint = Color(0xFF0056E0)
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Bienvenido a WorkCheckApp",
+                        text = "¡Bienvenido a WorkCheckApp!",
                         style = MaterialTheme.typography.titleLarge.copy(
-                            color = MaterialTheme.colorScheme.primary
+                            color = Color(0xFF000000)
                         )
                     )
 
@@ -76,14 +80,16 @@ fun LoginScreen(navController: NavHostController) {
                     OutlinedTextField(
                         value = email,
                         onValueChange = {
-                            email = it
+                            // Filtra espacios en blanco y saltos de línea
+                            email = it.replace(" ", "").replace("\n", "")
                             emailError = false
                         },
                         label = { Text(text = "Email") },
-                        placeholder = { Text(text = "Example@email.com") },
+                        placeholder = { Text(text = "Example@gmail.com") },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        isError = emailError
+                        isError = emailError,
+                        textStyle = LocalTextStyle.current.copy(color = Color.Black),
                     )
                     if (emailError) {
                         Text(text = "El email es obligatorio", color = Red, style = MaterialTheme.typography.bodySmall)
@@ -94,7 +100,8 @@ fun LoginScreen(navController: NavHostController) {
                     OutlinedTextField(
                         value = password,
                         onValueChange = {
-                            password = it
+                            // Filtra espacios en blanco y saltos de línea
+                            password = it.replace(" ", "").replace("\n", "")
                             passwordError = false
                         },
                         label = { Text(text = "Password") },
@@ -105,10 +112,14 @@ fun LoginScreen(navController: NavHostController) {
                         trailingIcon = {
                             val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(imageVector = image, contentDescription = if (passwordVisible) "Hide password" else "Show password")
+                                Icon(imageVector = image,
+                                    contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                                    tint = Color(0xFF000000)
+                                )
                             }
                         },
-                        isError = passwordError
+                        isError = passwordError,
+                        textStyle = LocalTextStyle.current.copy(color = Color.Black)
                     )
                     if (passwordError) {
                         Text(text = "La contraseña es obligatoria", color = Red, style = MaterialTheme.typography.bodySmall)
@@ -116,16 +127,21 @@ fun LoginScreen(navController: NavHostController) {
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    TextButton(onClick = {}) {
-                        Text(text = "Forgot Password?", color = MaterialTheme.colorScheme.primary)
+                    TextButton(onClick = { navController.navigate("forgot_password") }) {
+                        Text(
+                            text = "¿Olvidaste tu contraseña\uD83E\uDD14?",
+                            color = Color(0xFF000000),
+                            textDecoration = TextDecoration.Underline,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = Color(0xFF000000)
+                            )
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Botón de inicio de sesión
                     Button(
                         onClick = {
-                            // Validar si los campos están vacíos
                             emailError = email.isEmpty()
                             passwordError = password.isEmpty()
 
@@ -153,18 +169,21 @@ fun LoginScreen(navController: NavHostController) {
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Botón de registro
                     OutlinedButton(
                         onClick = { navController.navigate("register") },
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
-                        colors = ButtonDefaults.outlinedButtonColors()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF0056E0),
+                            contentColor = Color.White
+                        )
                     ) {
-                        Text(text = "Registro", color = MaterialTheme.colorScheme.primary)
+                        Text(text = "Registro", color = Color.White)
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Mostrar dialogo de error en caso de fallo
                     if (showDialog) {
                         AlertDialog(
                             onDismissRequest = { showDialog = false },

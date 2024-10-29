@@ -35,7 +35,6 @@ fun BottomNavigationBar(navController: NavHostController) {
                     when (item.label) {
                         "Calendario" -> navController.navigate("calendar")
                         "Home" -> navController.navigate("home")
-                        "Registros" -> navController.navigate("register")  // Navegación a la vista de Registros
                     }
                 }
             )
