@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,11 +36,18 @@ fun AddNum(navController: NavHostController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Add Phone Number", color = Color.White) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF0056E0)
-                )
+            androidx.compose.material.TopAppBar(
+                title = { androidx.compose.material.Text("Añadir Número de Contacto", color = Color.White) },
+                backgroundColor = Color(0xFF0056E0),
+                navigationIcon = {
+                    androidx.compose.material.IconButton(onClick = { navController.popBackStack() }) {
+                        androidx.compose.material.Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Regresar",
+                            tint = Color.White
+                        )
+                    }
+                }
             )
         },
         content = { paddingValues ->

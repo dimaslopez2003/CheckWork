@@ -110,6 +110,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
 
+
 // Firebase Firestore (si estás usando Firestore para guardar usuarios)
     implementation(libs.google.firebase.firestore.ktx)
 
@@ -119,3 +120,5 @@ dependencies {
     implementation("androidx.navigation:navigation-ui-ktx:$nav_version")
 
 }
+
+

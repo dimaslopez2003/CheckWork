@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -32,12 +33,21 @@ fun SoporteScreen(navController: NavHostController) {
 
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Soporte y Asistencia", color = Color.White, fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0056E0))
-            )
-        },
+            topBar = {
+                androidx.compose.material.TopAppBar(
+                    title = { androidx.compose.material.Text("Soporte y asistencia", color = Color.White) },
+                    backgroundColor = Color(0xFF0056E0),
+                    navigationIcon = {
+                        androidx.compose.material.IconButton(onClick = { navController.popBackStack() }) {
+                            androidx.compose.material.Icon(
+                                Icons.Default.ArrowBack,
+                                contentDescription = "Regresar",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                )
+            },
         content = { paddingValues ->
             Column(
                 modifier = Modifier

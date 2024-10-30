@@ -1,4 +1,5 @@
 import android.annotation.SuppressLint
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
@@ -64,10 +65,13 @@ fun RegisterScreen(navController: NavHostController) {
                 verticalArrangement = Arrangement.Top
             ) {
 
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                    contentDescription = "Logo de la app",
-                    modifier = Modifier.size(120.dp)
+                Image(
+                    painter = painterResource(id = R.drawable.logo),  // Assuming logo is stored in res/drawable/logo.png
+                    contentDescription = "Logo",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .align(Alignment.CenterHorizontally)
+                        .padding(bottom = 16.dp)
                 )
 
                 Spacer(modifier = Modifier.height(2.dp))
