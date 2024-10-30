@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.checkwork.Home.PantallaPrincipal
 import com.example.checkwork.Login.LoginScreen.LoginScreen
+import com.example.checkwork.NavigationRegister.CheckHistoryScreen
 import com.example.checkwork.Profile.AddNum
 import com.example.checkwork.Profile.ProfileScreen
 import com.example.checkwork.forgot.ForgotPasswordMethodScreen
@@ -38,6 +39,7 @@ class MainActivity : ComponentActivity() {
                     composable(route = "AddPhone"){ AddNum(navController) }
                     composable(route = "support"){ SoporteScreen(navController) }
                     composable(route = "calendar") { CalendarView(navController) }
+                    composable (route ="navigate_register"){CheckHistoryScreen(navController)}
 
                     // Navegación para el flujo de recuperación de contraseña
                     composable(route = "forgot_password") { ForgotPasswordScreen(navController) }

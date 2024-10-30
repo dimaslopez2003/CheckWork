@@ -2,6 +2,8 @@ package com.example.checkwork.forgot
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,9 +24,18 @@ fun ForgotPasswordScreen(navController: NavHostController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("WorkCheckApp", color = Color.White) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0056E0))
+            androidx.compose.material.TopAppBar(
+                title = { },
+                backgroundColor = Color(0xFF0056E0),
+                navigationIcon = {
+                    androidx.compose.material.IconButton(onClick = { navController.popBackStack() }) {
+                        androidx.compose.material.Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Regresar",
+                            tint = Color.White
+                        )
+                    }
+                }
             )
         },
         content = {

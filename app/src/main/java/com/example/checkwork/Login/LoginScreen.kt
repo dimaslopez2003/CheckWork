@@ -1,5 +1,6 @@
 package com.example.checkwork.Login.LoginScreen
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -16,8 +17,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color.Companion.Red
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.navigation.NavHostController
+import com.example.checkwork.R
 import com.example.checkwork.data.model.AuthManager
 import com.example.checkwork.forgot.ForgotPasswordScreen
 
@@ -57,15 +60,14 @@ fun LoginScreen(navController: NavHostController) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.AccessTimeFilled,
-                        contentDescription = "Avatar",
+                    Image(
+                        painter = painterResource(id = R.drawable.logo),  // Assuming logo is stored in res/drawable/logo.png
+                        contentDescription = "Logo",
                         modifier = Modifier
-                            .size(100.dp)
-                            .padding(8.dp),
-                        tint = Color(0xFF0056E0)
+                            .size(80.dp)
+                            .align(Alignment.CenterHorizontally)
+                            .padding(bottom = 16.dp)
                     )
-
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
