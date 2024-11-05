@@ -10,16 +10,23 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
 
 data class BottomNavItem(
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val icon: ImageVector,
     val label: String
 )
 
 @Composable
-fun BottomNavigationBar(navController: NavHostController) {
-    BottomNavigation(backgroundColor = Color(0xFF0056E0)) {
+fun BottomNavigationBar(
+    navController: NavHostController,
+    isDarkModeEnabled: Boolean
+) {
+    BottomNavigation(
+        backgroundColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0),
+        contentColor = if (isDarkModeEnabled) Color.White else Color.White
+    ) {
         val items = listOf(
             BottomNavItem(Icons.Default.CalendarToday, "Calendario"),
             BottomNavItem(Icons.Default.Home, "Home"),
@@ -30,7 +37,7 @@ fun BottomNavigationBar(navController: NavHostController) {
             BottomNavigationItem(
                 icon = { Icon(item.icon, contentDescription = item.label, tint = Color.White) },
                 label = { Text(item.label, color = Color.White) },
-                selected = false,  // Implementa la lógica para manejar el ítem seleccionado
+                selected = false,  // Aquí puedes implementar la lógica para manejar el ítem seleccionado
                 onClick = {
                     when (item.label) {
                         "Calendario" -> navController.navigate("calendar")

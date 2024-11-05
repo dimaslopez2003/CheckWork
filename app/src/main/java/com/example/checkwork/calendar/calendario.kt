@@ -18,47 +18,82 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.checkwork.Navigation.BottomNavigationBar
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import java.util.*
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun CalendarView(navController: NavHostController) {
     val systemUiController = rememberSystemUiController()
-    systemUiController.setSystemBarsColor(color = Color(0xFF0056E0))
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
 
     val calendar = Calendar.getInstance()
     var month by remember { mutableStateOf(calendar.get(Calendar.MONTH)) }
     var year by remember { mutableStateOf(calendar.get(Calendar.YEAR)) }
     val days = getDaysInMonth(month, year)
     val currentDay = calendar.get(Calendar.DAY_OF_MONTH)
+    var isDarkModeEnabled by remember { mutableStateOf(false) }
 
-    var selectedDay by remember { mutableStateOf(currentDay) }  // Día seleccionado
+    // Recuperar el estado de modo oscuro de Firebase
+    LaunchedEffect(Unit) {
+        auth.currentUser?.uid?.let { userId ->
+            db.collection("users").document(userId).get()
+                .addOnSuccessListener { document ->
+                    isDarkModeEnabled = document.getBoolean("darkModeEnabled") ?: false
+                }
+        }
+    }
+
+    // Guardar estado del modo oscuro en Firebase
+    fun updateDarkModePreferenceInFirebase(isDarkMode: Boolean) {
+        auth.currentUser?.uid?.let { userId ->
+            db.collection("users").document(userId).update("darkModeEnabled", isDarkMode)
+        }
+    }
+
+    var selectedDay by remember { mutableStateOf(currentDay) }
+
+    // Cambiar color de la barra de estado
+    systemUiController.setSystemBarsColor(
+        color = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0)
+    )
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Calendario", color = Color.White) },
-                backgroundColor = Color(0xFF0056E0),
+                backgroundColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0),
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {  // Navegar hacia atrás
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Regresar", tint = Color.White)
                     }
                 },
                 actions = {
-                    IconButton(onClick = { }) {
-                        Icon(Icons.Default.ArrowForward, contentDescription = "Next", tint = Color.White)
-                    }
+                    // Interruptor de modo oscuro en la barra superior
+                    Switch(
+                        checked = isDarkModeEnabled,
+                        onCheckedChange = {
+                            isDarkModeEnabled = it
+                            updateDarkModePreferenceInFirebase(it)
+                        },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF0056E0))
+                    )
                 }
             )
         },
         bottomBar = {
-            BottomNavigationBar(navController = navController)
+            BottomNavigationBar(
+                navController = navController,
+                isDarkModeEnabled = isDarkModeEnabled
+            )
         },
         content = {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFE0F7FA)),
+                    .background(if (isDarkModeEnabled) Color(0xFF121212) else Color(0xFFE0F7FA)),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -77,12 +112,13 @@ fun CalendarView(navController: NavHostController) {
                             month--
                         }
                     }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Mes anterior")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Mes anterior", tint = if (isDarkModeEnabled) Color.White else Color.Black)
                     }
 
                     Text(
                         text = "${getMonthName(month)} $year",
                         fontSize = 24.sp,
+                        color = if (isDarkModeEnabled) Color.White else Color.Black,
                         modifier = Modifier.align(Alignment.CenterVertically)
                     )
 
@@ -94,7 +130,7 @@ fun CalendarView(navController: NavHostController) {
                             month++
                         }
                     }) {
-                        Icon(Icons.Default.ArrowForward, contentDescription = "Mes siguiente")
+                        Icon(Icons.Default.ArrowForward, contentDescription = "Mes siguiente", tint = if (isDarkModeEnabled) Color.White else Color.Black)
                     }
                 }
 
@@ -117,8 +153,8 @@ fun CalendarView(navController: NavHostController) {
                                     style = TextStyle(
                                         color = when {
                                             day == currentDay && calendar.get(Calendar.MONTH) == month && calendar.get(Calendar.YEAR) == year -> Color.Red
-                                            day == selectedDay -> Color.Blue  // Resaltar el día seleccionado
-                                            else -> Color.Black
+                                            day == selectedDay -> if (isDarkModeEnabled) Color.Cyan else Color.Blue
+                                            else -> if (isDarkModeEnabled) Color.LightGray else Color.Black
                                         },
                                         textAlign = TextAlign.Center
                                     ),

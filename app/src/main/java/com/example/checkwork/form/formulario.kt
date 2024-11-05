@@ -22,6 +22,7 @@ import androidx.navigation.compose.rememberNavController
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.example.checkwork.data.model.AuthManager
+import com.google.firebase.auth.FirebaseAuth
 
 class FormularioEmpresaActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,6 +37,10 @@ class FormularioEmpresaActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FormularioEmpresaScreen(navController: NavHostController) {
+    val auth = FirebaseAuth.getInstance()
+    val db = Firebase.firestore
+
+    var isDarkModeEnabled by remember { mutableStateOf(false) }
     var nombreEmpresa by remember { mutableStateOf("") }
     var ciudad by remember { mutableStateOf("") }
     var cp by remember { mutableStateOf("") }
@@ -46,8 +51,22 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
     var cpError by remember { mutableStateOf(false) }
     var rfcError by remember { mutableStateOf(false) }
 
-    val db = Firebase.firestore
-    val authManager = AuthManager()
+    // Recuperar el estado de modo oscuro de Firebase
+    LaunchedEffect(Unit) {
+        val userId = auth.currentUser?.uid
+        if (userId != null) {
+            db.collection("users").document(userId).get().addOnSuccessListener { document ->
+                isDarkModeEnabled = document.getBoolean("darkModeEnabled") ?: false
+            }
+        }
+    }
+
+    // Guardar estado del modo oscuro en Firebase
+    fun updateDarkModePreferenceInFirebase(isDarkMode: Boolean) {
+        auth.currentUser?.uid?.let { userId ->
+            db.collection("users").document(userId).update("darkModeEnabled", isDarkMode)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -55,7 +74,7 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                 modifier = Modifier.fillMaxWidth(),
                 title = { Text("Registra tu empresa", color = Color.White) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF0056E0)
+                    containerColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0)
                 ),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
@@ -65,6 +84,16 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                             tint = Color.White
                         )
                     }
+                },
+                actions = {
+                    Switch(
+                        checked = isDarkModeEnabled,
+                        onCheckedChange = {
+                            isDarkModeEnabled = it
+                            updateDarkModePreferenceInFirebase(it)
+                        },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF0056E0))
+                    )
                 }
             )
         },
@@ -72,8 +101,8 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
             Surface(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFF66ABE3)),
-                color = Color(0xFF66ABE3)
+                    .background(if (isDarkModeEnabled) Color(0xFF121212) else Color(0xFF66ABE3)),
+                color = if (isDarkModeEnabled) Color(0xFF121212) else Color(0xFF66ABE3)
             ) {
                 Column(
                     modifier = Modifier
@@ -84,18 +113,15 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                 ) {
                     Card(
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFE0F7FA),
+                            containerColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFFE0F7FA),
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
-
                         elevation = CardDefaults.cardElevation(8.dp)
-                    )
-                    {
+                    ) {
                         Column(
-                            modifier = Modifier
-                                .padding(16.dp),
+                            modifier = Modifier.padding(16.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Icon(
@@ -104,7 +130,7 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                                 modifier = Modifier
                                     .size(60.dp)
                                     .padding(8.dp),
-                                tint = Color(0xFF000000)
+                                tint = if (isDarkModeEnabled) Color.White else Color.Black
                             )
 
                             Spacer(modifier = Modifier.height(8.dp))
@@ -114,8 +140,12 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                                 value = nombreEmpresa,
                                 onValueChange = { nombreEmpresa = it },
                                 label = { Text("Nombre de la Empresa") },
-                                textStyle = LocalTextStyle.current.copy(color = Color.Black),
-                                modifier = Modifier.fillMaxWidth()
+                                textStyle = LocalTextStyle.current.copy(color = if (isDarkModeEnabled) Color.White else Color.Black),
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = TextFieldDefaults.colors(
+                                    if (isDarkModeEnabled) Color.White else Color.Black,
+                                    if (isDarkModeEnabled) Color.LightGray else Color.Black
+                                )
                             )
 
                             Spacer(modifier = Modifier.height(8.dp))
@@ -134,10 +164,14 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                                         }
                                     },
                                     label = { Text("Código Postal") },
-                                    textStyle = LocalTextStyle.current.copy(color = Color.Black),
+                                    textStyle = LocalTextStyle.current.copy(color = if (isDarkModeEnabled) Color.White else Color.Black),
                                     modifier = Modifier.weight(1f),
                                     isError = cpError,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    colors = TextFieldDefaults.colors(
+                                        if (isDarkModeEnabled) Color.White else Color.Black,
+                                        if (isDarkModeEnabled) Color.LightGray else Color.Black
+                                    )
                                 )
 
                                 OutlinedTextField(
@@ -149,9 +183,13 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                                         }
                                     },
                                     label = { Text("RFC") },
-                                    textStyle = LocalTextStyle.current.copy(color = Color.Black),
+                                    textStyle = LocalTextStyle.current.copy(color = if (isDarkModeEnabled) Color.White else Color.Black),
                                     modifier = Modifier.weight(1f),
-                                    isError = rfcError
+                                    isError = rfcError,
+                                    colors = TextFieldDefaults.colors(
+                                        if (isDarkModeEnabled) Color.White else Color.Black,
+                                        if (isDarkModeEnabled) Color.LightGray else Color.Black
+                                    )
                                 )
                             }
 
@@ -181,16 +219,24 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                                     value = ciudad,
                                     onValueChange = { ciudad = it },
                                     label = { Text("Ciudad") },
-                                    textStyle = LocalTextStyle.current.copy(color = Color.Black),
-                                    modifier = Modifier.weight(1f)
+                                    textStyle = LocalTextStyle.current.copy(color = if (isDarkModeEnabled) Color.White else Color.Black),
+                                    modifier = Modifier.weight(1f),
+                                    colors = TextFieldDefaults.colors(
+                                        if (isDarkModeEnabled) Color.White else Color.Black,
+                                        if (isDarkModeEnabled) Color.LightGray else Color.Black
+                                    )
                                 )
 
                                 OutlinedTextField(
                                     value = estado,
                                     onValueChange = { estado = it },
                                     label = { Text("Estado") },
-                                    textStyle = LocalTextStyle.current.copy(color = Color.Black),
-                                    modifier = Modifier.weight(1f)
+                                    textStyle = LocalTextStyle.current.copy(color = if (isDarkModeEnabled) Color.White else Color.Black),
+                                    modifier = Modifier.weight(1f),
+                                    colors = TextFieldDefaults.colors(
+                                        if (isDarkModeEnabled) Color.White else Color.Black,
+                                        if (isDarkModeEnabled) Color.LightGray else Color.Black
+                                    )
                                 )
                             }
 
@@ -201,8 +247,12 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                                 value = direccion,
                                 onValueChange = { direccion = it },
                                 label = { Text("Dirección") },
-                                textStyle = LocalTextStyle.current.copy(color = Color.Black),
-                                modifier = Modifier.fillMaxWidth()
+                                textStyle = LocalTextStyle.current.copy(color = if (isDarkModeEnabled) Color.White else Color.Black),
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = TextFieldDefaults.colors(
+                                    if (isDarkModeEnabled) Color.White else Color.Black,
+                                    if (isDarkModeEnabled) Color.LightGray else Color.Black
+                                )
                             )
 
                             Spacer(modifier = Modifier.height(8.dp))
@@ -212,8 +262,12 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                                 value = pais,
                                 onValueChange = { pais = it },
                                 label = { Text("País") },
-                                textStyle = LocalTextStyle.current.copy(color = Color.Black),
-                                modifier = Modifier.fillMaxWidth()
+                                textStyle = LocalTextStyle.current.copy(color = if (isDarkModeEnabled) Color.White else Color.Black),
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = TextFieldDefaults.colors(
+                                    if (isDarkModeEnabled) Color.White else Color.Black,
+                                    if (isDarkModeEnabled) Color.LightGray else Color.Black
+                                )
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
@@ -221,18 +275,18 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                             Button(
                                 onClick = {
                                     val empresaData = hashMapOf(
-                                        "nombre_empresa" to nombreEmpresa,
+                                        "nombreEmpresa" to nombreEmpresa,
                                         "ciudad" to ciudad,
                                         "cp" to cp,
                                         "direccion" to direccion,
                                         "estado" to estado,
                                         "pais" to pais,
-                                        "rfc" to rfc
+                                        "rfc" to rfc,
                                     )
-                                    // Lógica para guardar en Firestore
+                                    // Guarda empresaData en Firebase u otra acción
                                 },
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF0056E0),
+                                    containerColor = if (isDarkModeEnabled) Color(0xFF000000) else Color(0xFF0056E0),
                                     contentColor = Color.White
                                 ),
                                 modifier = Modifier.fillMaxWidth()
