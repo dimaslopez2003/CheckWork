@@ -99,7 +99,8 @@ fun SoporteScreen(navController: NavHostController) {
                 OutlinedTextField(
                     value = nombre,
                     onValueChange = { nombre = it },
-                    label = { Text("Nombre completo", color = if (isDarkModeEnabled) Color.White else Color.Black) },
+                    label = { Text("Nombre completo")},
+                    textStyle = LocalTextStyle.current.copy(color = if (isDarkModeEnabled) Color.White else Color.Black),
                     leadingIcon = {
                         Icon(Icons.Filled.Person, contentDescription = "Nombre Icono", tint = if (isDarkModeEnabled) Color.Black else Color.Black)
                     },
@@ -117,7 +118,8 @@ fun SoporteScreen(navController: NavHostController) {
                 OutlinedTextField(
                     value = correo,
                     onValueChange = { correo = it },
-                    label = { Text("Correo electrónico", color = if (isDarkModeEnabled) Color.White else Color.Black) },
+                    label = { Text("Correo electrónico")},
+                    textStyle = LocalTextStyle.current.copy(color = if (isDarkModeEnabled) Color.White else Color.Black),
                     leadingIcon = {
                         Icon(Icons.Filled.Email, contentDescription = "Correo Icono", tint = if (isDarkModeEnabled) Color.Black else Color.Black)
                     },
@@ -135,7 +137,8 @@ fun SoporteScreen(navController: NavHostController) {
                 OutlinedTextField(
                     value = mensaje,
                     onValueChange = { mensaje = it },
-                    label = { Text("Mensaje", color = if (isDarkModeEnabled) Color.White else Color.Black) },
+                    label = { Text("Mensaje")},
+                    textStyle = LocalTextStyle.current.copy(color = if (isDarkModeEnabled) Color.White else Color.Black),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(150.dp)

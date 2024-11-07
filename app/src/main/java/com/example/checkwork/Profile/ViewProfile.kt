@@ -54,9 +54,28 @@ fun ProfileScreen(navController: NavHostController) {
     var profileImageUrl by remember { mutableStateOf<String?>(null) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var cameraPermissionGranted by remember { mutableStateOf(false) }
+    var storagePermissionGranted by remember { mutableStateOf(false) }
 
-    // Recuperar el estado de modo oscuro de Firebase
+    val permissionsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { permissions ->
+            cameraPermissionGranted = permissions[Manifest.permission.CAMERA] ?: false
+            storagePermissionGranted =
+                permissions[Manifest.permission.READ_EXTERNAL_STORAGE] ?: false
+        }
+    )
+
     LaunchedEffect(Unit) {
+        permissionsLauncher.launch(
+            arrayOf(
+                Manifest.permission.CAMERA,
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            )
+        )
+        isDarkModeEnabled = auth.currentUser?.uid != null
+
         val userId = auth.currentUser?.uid
         if (userId != null) {
             db.collection("users").document(userId).get().addOnSuccessListener { document ->
@@ -78,7 +97,22 @@ fun ProfileScreen(navController: NavHostController) {
         }
     }
 
-    // Guardar estado del modo oscuro en Firebase
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri ->
+            selectedImageUri = uri
+            uri?.let { uploadImageToFirebase(it) }
+        }
+    )
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview(),
+        onResult = { bmp ->
+            bitmap = bmp
+            bmp?.let { uploadImageToFirebaseFromBitmap(it) }
+        }
+    )
+
     fun updateDarkModePreferenceInFirebase(isDarkMode: Boolean) {
         auth.currentUser?.uid?.let { userId ->
             db.collection("users").document(userId).update("darkModeEnabled", isDarkMode)
@@ -92,7 +126,11 @@ fun ProfileScreen(navController: NavHostController) {
                 backgroundColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Filled.Logout, contentDescription = "Regresar", tint = Color.White)
+                        Icon(
+                            Icons.Filled.Logout,
+                            contentDescription = "Regresar",
+                            tint = Color.White
+                        )
                     }
                 },
                 actions = {
@@ -115,7 +153,6 @@ fun ProfileScreen(navController: NavHostController) {
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Tarjeta de perfil
                 Card(
                     backgroundColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0),
                     modifier = Modifier
@@ -127,7 +164,6 @@ fun ProfileScreen(navController: NavHostController) {
                         modifier = Modifier.padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Foto de perfil
                         Box(contentAlignment = Alignment.BottomEnd) {
                             if (profileImageUrl != null) {
                                 Image(
@@ -155,6 +191,7 @@ fun ProfileScreen(navController: NavHostController) {
                                         .size(120.dp)
                                         .clip(CircleShape),
                                     tint = if (isDarkModeEnabled) Color.Gray else Color.White
+
                                 )
                             }
 
@@ -164,7 +201,11 @@ fun ProfileScreen(navController: NavHostController) {
                                     .size(24.dp)
                                     .padding(4.dp)
                             ) {
-                                Icon(Icons.Filled.Edit, contentDescription = "Editar Perfil", tint = Color.White)
+                                Icon(
+                                    Icons.Filled.Edit,
+                                    contentDescription = "Editar Perfil",
+                                    tint = Color.White
+                                )
                             }
                         }
                         Spacer(modifier = Modifier.height(16.dp))
@@ -177,7 +218,12 @@ fun ProfileScreen(navController: NavHostController) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    InfoItem(icon = Icons.Filled.AssignmentInd, label = "ID DE EMPLEADO", value = employeeId, isDarkModeEnabled)
+                    InfoItem(
+                        icon = Icons.Filled.AssignmentInd,
+                        label = "ID DE EMPLEADO",
+                        value = employeeId, isDarkModeEnabled
+                    )
+
                     Spacer(modifier = Modifier.height(8.dp))
                     InfoItem(
                         icon = Icons.Filled.Fingerprint,
@@ -190,10 +236,19 @@ fun ProfileScreen(navController: NavHostController) {
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     if (role == "Administrador") {
-                        InfoItem(icon = Icons.Filled.Diversity1, label = "CÓDIGO DE EMPRESA", value = companyCode, isDarkModeEnabled)
+                        InfoItem(
+                            icon = Icons.Filled.Diversity1,
+                            label = "CÓDIGO DE EMPRESA",
+                            value = companyCode, isDarkModeEnabled
+                        )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    InfoItem(icon = Icons.Filled.CoPresent, label = "ROL", value = role, isDarkModeEnabled)
+                    InfoItem(
+                        icon = Icons.Filled.CoPresent,
+                        label = "ROL",
+                        value = role,
+                        isDarkModeEnabled
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
 
                     if (phoneNumber != null) {
@@ -201,14 +256,16 @@ fun ProfileScreen(navController: NavHostController) {
                             icon = Icons.Filled.Call,
                             label = "Número Telefónico",
                             value = phoneNumber.toString(),
-                            isDarkModeEnabled = isDarkModeEnabled
+                            isDarkModeEnabled,
+                            onClick = { showDeleteDialog = true }
                         )
                     } else {
                         InfoItem(
                             icon = Icons.Filled.Call,
                             label = "Agregar Número Telefónico",
                             value = "",
-                            isDarkModeEnabled = isDarkModeEnabled
+                            isDarkModeEnabled,
+                            onClick = { navController.navigate("AddPhone") }
                         )
                     }
                 }
@@ -221,14 +278,92 @@ fun ProfileScreen(navController: NavHostController) {
                         navController.navigate("login")
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(backgroundColor = if (isDarkModeEnabled) Color(0xFF000205)
-                    else Color(0xFF0056E0))
-                ) {
+                    colors = ButtonDefaults.buttonColors(
+                        backgroundColor = if (isDarkModeEnabled) Color(0xFF000205)
+                        else Color(0xFF0056E0)
+                    )
+                )
+                {
                     Text("CERRAR SESIÓN", color = Color.White)
                 }
             }
+
+            if (showDialog) {
+                AlertDialog(
+                    onDismissRequest = { showDialog = false },
+                    title = { Text("Editar Foto de Perfil") },
+                    text = {
+                        Column {
+                            Text("¿Deseas tomar una nueva foto o cargar una desde la galería?")
+                        }
+                    },
+                    confirmButton = {
+                        Row {
+                            TextButton(onClick = {
+                                if (cameraPermissionGranted) {
+                                    cameraLauncher.launch(null)
+                                } else {
+                                    permissionsLauncher.launch(arrayOf(Manifest.permission.CAMERA))
+                                }
+                                showDialog = false
+                            }) {
+                                Text("Tomar Foto")
+                            }
+                            TextButton(onClick = {
+                                if (storagePermissionGranted) {
+                                    galleryLauncher.launch("image/*")
+                                } else {
+                                    permissionsLauncher.launch(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE))
+                                }
+                                showDialog = false
+                            }) {
+                                Text("Cargar desde Galería")
+                            }
+                        }
+                    }
+                )
+            }
+
+            if (showDeleteDialog) {
+                AlertDialog(
+                    onDismissRequest = { showDeleteDialog = false },
+                    title = { Text("Eliminar Número Telefónico") },
+                    text = { Text("¿Estás seguro de que deseas eliminar tu número de teléfono?") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            deletePhoneNumber { success ->
+                                if (success) {
+                                    phoneNumber = null // Actualiza en la UI
+                                }
+                                showDeleteDialog = false
+                            }
+                        }) {
+                            Text("Eliminar")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDeleteDialog = false }) {
+                            Text("Cancelar")
+                        }
+                    }
+                )
+            }
         }
     )
+}
+
+
+fun deletePhoneNumber(callback: (Boolean) -> Unit) {
+    val userId = FirebaseAuth.getInstance().currentUser?.uid
+    if (userId != null) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users").document(userId)
+            .update("phoneNumber", null)
+            .addOnSuccessListener { callback(true) }
+            .addOnFailureListener { callback(false) }
+    } else {
+        callback(false)
+    }
 }
 
 @Composable
@@ -247,18 +382,18 @@ fun InfoItem(
             .fillMaxWidth()
             .padding(vertical = 8.dp)
             .clickable { onClick?.invoke() }
+
+
     ) {
-        Icon(
-            imageVector = icon,
+        Icon(imageVector = icon,
             contentDescription = label,
             modifier = Modifier.size(24.dp),
             tint = if (isDarkModeEnabled) Color.White else Color.Black
         )
+
         Spacer(modifier = Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = label,
-                fontWeight = FontWeight.Bold,
+            Text(text = label, fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
                 color = if (isDarkModeEnabled) Color.White else Color.Black
             )
@@ -276,9 +411,9 @@ fun InfoItem(
     }
 }
 
-
 fun uploadImageToFirebase(uri: Uri) {
-    val storageRef = FirebaseStorage.getInstance().reference.child("profileImages/${FirebaseAuth.getInstance().currentUser?.uid}")
+    val storageRef =
+        FirebaseStorage.getInstance().reference.child("profileImages/${FirebaseAuth.getInstance().currentUser?.uid}")
     storageRef.putFile(uri)
         .addOnSuccessListener {
             storageRef.downloadUrl.addOnSuccessListener { downloadUri ->
@@ -291,7 +426,8 @@ fun uploadImageToFirebase(uri: Uri) {
 }
 
 fun uploadImageToFirebaseFromBitmap(bitmap: Bitmap) {
-    val storageRef = FirebaseStorage.getInstance().reference.child("profileImages/${FirebaseAuth.getInstance().currentUser?.uid}")
+    val storageRef =
+        FirebaseStorage.getInstance().reference.child("profileImages/${FirebaseAuth.getInstance().currentUser?.uid}")
     val baos = ByteArrayOutputStream()
     bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
     val data = baos.toByteArray()

@@ -30,11 +30,12 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.example.checkwork.Checks.registrarEntradaSalida
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun PantallaPrincipal(navController: NavHostController) {
-
+    val systemUiController = rememberSystemUiController()
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
 
@@ -77,6 +78,10 @@ fun PantallaPrincipal(navController: NavHostController) {
 
     val scaffoldState = rememberScaffoldState()
     val coroutineScope = rememberCoroutineScope()
+
+    systemUiController.setSystemBarsColor(
+        color = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0)
+    )
 
     Scaffold(
         scaffoldState = scaffoldState,
@@ -183,6 +188,8 @@ fun DrawerContent(
             style = MaterialTheme.typography.body1.copy(color = if (isDarkModeEnabled) Color.LightGray else Color.White),
             modifier = Modifier.padding(bottom = 16.dp)
         )
+
+            Spacer(modifier = Modifier.width(16.dp))
 
         Row(
             modifier = Modifier
