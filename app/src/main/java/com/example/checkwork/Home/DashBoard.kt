@@ -46,6 +46,7 @@ fun PantallaPrincipal(navController: NavHostController) {
     var profileImageUrl by remember { mutableStateOf<String?>(null) }
     var hasCheckedIn by remember { mutableStateOf(false) }
     var hasCheckedOut by remember { mutableStateOf(false) }
+    var nombreEmpresa by remember { mutableStateOf("") }
 
     val context = LocalContext.current
 
@@ -53,14 +54,20 @@ fun PantallaPrincipal(navController: NavHostController) {
     LaunchedEffect(Unit) {
         val userId = auth.currentUser?.uid
         if (userId != null) {
+            // Obtener datos del usuario
             db.collection("users").document(userId).get()
                 .addOnSuccessListener { document ->
                     profileImageUrl = document.getString("profileImageUrl")
                     departamento = document.getString("departamento") ?: ""
                     username = document.getString("username") ?: ""
-                    isDarkModeEnabled = document.getBoolean("darkModeEnabled") ?: false // Valor de modo oscuro
+                    isDarkModeEnabled = document.getBoolean("darkModeEnabled") ?: false
                 }
-                .addOnFailureListener { Log.e("Firestore", "Error al obtener los datos") }
+                .addOnFailureListener { Log.e("Firestore", "Error al obtener los datos del usuario") }
+            //obtener datos de la empresa
+            db.collection("Company_Code").document("COMP40666").get()
+                .addOnSuccessListener { document ->
+                    nombreEmpresa = document.getString("nombreEmpresa") ?: ""
+                }
         }
 
         while (true) {
@@ -139,7 +146,7 @@ fun PantallaPrincipal(navController: NavHostController) {
             }
         },
         content = {
-            ContentSection(username, currentTime, context, hasCheckedIn, hasCheckedOut) {
+            ContentSection(username, currentTime, nombreEmpresa, context, hasCheckedIn, hasCheckedOut) {
                 hasCheckedIn = it.first
                 hasCheckedOut = it.second
             }
@@ -189,7 +196,7 @@ fun DrawerContent(
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-            Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(16.dp))
 
         Row(
             modifier = Modifier
@@ -299,6 +306,7 @@ fun DrawerContent(
 fun ContentSection(
     username: String,
     currentTime: String,
+    nombreEmpresa: String,
     context: android.content.Context,
     hasCheckedIn: Boolean,
     hasCheckedOut: Boolean,
@@ -311,6 +319,30 @@ fun ContentSection(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(8.dp),
+            backgroundColor = Color(0xFFF0F0F0),
+
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Company: ",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = nombreEmpresa,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
         Card(
             modifier = Modifier
                 .fillMaxWidth()

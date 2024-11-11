@@ -42,45 +42,6 @@ fun AdminCrudScreen(navController: NavHostController) {
         Text("Admin CRUD", fontSize = 24.sp, color = Color.Black)
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = userId,
-            onValueChange = { userId = it },
-            label = { Text("User ID") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text("Username") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = phoneNumber,
-            onValueChange = { phoneNumber = it },
-            label = { Text("Phone Number") },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-        )
-
-        OutlinedTextField(
-            value = employeeId,
-            onValueChange = { employeeId = it },
-            label = { Text("Employee ID") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = departamento,
-            onValueChange = { departamento = it },
-            label = { Text("Departamento") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         // Botones CRUD
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly,

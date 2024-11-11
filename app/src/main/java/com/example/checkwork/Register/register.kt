@@ -124,7 +124,7 @@ fun RegisterScreen(navController: NavHostController) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(text = "Selecciona tu rol:", fontSize = 18.sp, color = Color(0x00000000))
+                Text(text = "Selecciona tu rol:", fontSize = 18.sp, color = Color.Black)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Box {
@@ -180,68 +180,36 @@ fun RegisterScreen(navController: NavHostController) {
                                                         "employeeId" to employeeId,
                                                         "rol" to selectedRole
                                                     )
-
-                                                    db.collection("users")
-                                                        .document(userId)
-                                                        .set(userMap)
+                                                    db.collection("users").document(userId).set(userMap)
                                                         .addOnSuccessListener {
-                                                            if (selectedRole == "Administrador") {
-                                                                val companyCode = generateCompanyCode()
-                                                                val companyMap = hashMapOf(
-                                                                    "companyCode" to companyCode
-                                                                )
-                                                                db.collection("empresa")
-                                                                    .document(userId)
-                                                                    .set(companyMap)
-                                                                    .addOnSuccessListener {
-                                                                        coroutineScope.launch {
-                                                                            scaffoldState.snackbarHostState.showSnackbar("Registro exitoso. Código de empresa: $companyCode")
-                                                                            navController.navigate("login")
-                                                                        }
-                                                                    }
-                                                                    .addOnFailureListener {
-                                                                        errorMessage = "Error al generar el código de empresa"
-                                                                    }
-                                                            } else {
-                                                                coroutineScope.launch {
-                                                                    scaffoldState.snackbarHostState.showSnackbar("Registro exitoso")
-                                                                    navController.navigate("login")
-                                                                }
-                                                            }
+                                                            navController.navigate("login")
                                                         }
-                                                        .addOnFailureListener {
-                                                            errorMessage = "Error al guardar el usuario"
+                                                        .addOnFailureListener { e ->
+                                                            errorMessage = "Error al registrar: ${e.message}"
                                                         }
                                                 }
                                             } else {
-                                                errorMessage = task.exception?.message ?: "Error al registrar"
+                                                errorMessage = task.exception?.message ?: "Error desconocido"
                                             }
                                         }
                                 } catch (e: Exception) {
-                                    errorMessage = e.message ?: "Error desconocido"
+                                    errorMessage = "Error: ${e.message}"
                                 }
                             }
                         } else {
-                            errorMessage = "Por favor completa todos los campos"
+                            errorMessage = "Todos los campos son obligatorios"
                         }
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Registrarse", color = Color.White)
+                    Text("Registrar")
                 }
 
                 if (errorMessage.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(text = errorMessage, color = Color.Red)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = errorMessage, color = Color.Red, modifier = Modifier.padding(8.dp))
                 }
             }
         }
     )
-}
-
-fun generateCompanyCode(): String {
-    val characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    return (1..8)
-        .map { characters.random() }
-        .joinToString("")
 }

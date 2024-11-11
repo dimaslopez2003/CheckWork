@@ -43,7 +43,7 @@ fun ProfileScreen(navController: NavHostController) {
 
     var isDarkModeEnabled by remember { mutableStateOf(false) }
     var employeeId by remember { mutableStateOf("") }
-    var companyCode by remember { mutableStateOf("") }
+    var company_code by remember { mutableStateOf("") }
     var role by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var departamento by remember { mutableStateOf("") }
@@ -85,13 +85,14 @@ fun ProfileScreen(navController: NavHostController) {
                 role = document.getString("rol") ?: ""
                 profileImageUrl = document.getString("profileImageUrl")
                 phoneNumber = document.getLong("phoneNumber")
+                company_code = document.getString("company_code") ?: ""
                 isDarkModeEnabled = document.getBoolean("darkModeEnabled") ?: false
             }
 
             if (role == "Administrador") {
-                db.collection("empresa").document(userId).get()
+                db.collection("Company_code").document(userId).get()
                     .addOnSuccessListener { document ->
-                        companyCode = document.getString("companyCode") ?: ""
+                        company_code = document.getString("company_code") ?: ""
                     }
             }
         }
@@ -239,7 +240,8 @@ fun ProfileScreen(navController: NavHostController) {
                         InfoItem(
                             icon = Icons.Filled.Diversity1,
                             label = "CÓDIGO DE EMPRESA",
-                            value = companyCode, isDarkModeEnabled
+                            value = company_code,
+                            isDarkModeEnabled
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))

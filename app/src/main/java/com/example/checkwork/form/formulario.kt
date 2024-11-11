@@ -23,6 +23,8 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.example.checkwork.data.model.AuthManager
 import com.google.firebase.auth.FirebaseAuth
+import android.util.Log
+import androidx.compose.ui.text.input.ImeAction
 
 class FormularioEmpresaActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,7 +53,6 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
     var cpError by remember { mutableStateOf(false) }
     var rfcError by remember { mutableStateOf(false) }
 
-    // Recuperar el estado de modo oscuro de Firebase
     LaunchedEffect(Unit) {
         val userId = auth.currentUser?.uid
         if (userId != null) {
@@ -61,11 +62,30 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
         }
     }
 
-    // Guardar estado del modo oscuro en Firebase
     fun updateDarkModePreferenceInFirebase(isDarkMode: Boolean) {
         auth.currentUser?.uid?.let { userId ->
             db.collection("users").document(userId).update("darkModeEnabled", isDarkMode)
         }
+    }
+
+    fun generateCompanyCode(): String {
+        return "COMP" + (10000..99999).random()
+    }
+
+    fun saveCompanyData(db: com.google.firebase.firestore.FirebaseFirestore, companyData: Map<String, Any>, onCompanyCodeGenerated: (String) -> Unit) {
+        val companyCode = generateCompanyCode()
+        val companyDataWithCode = companyData.toMutableMap().apply {
+            put("company_code", companyCode)
+        }
+        db.collection("Company_Code").document(companyCode)
+            .set(companyDataWithCode)
+            .addOnSuccessListener {
+                Log.d("Firestore", "Company code saved successfully")
+                onCompanyCodeGenerated(companyCode)
+            }
+            .addOnFailureListener { e ->
+                Log.w("Firestore", "Error saving company code", e)
+            }
     }
 
     Scaffold(
@@ -135,7 +155,6 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            // Campo Nombre de la Empresa
                             OutlinedTextField(
                                 value = nombreEmpresa,
                                 onValueChange = { nombreEmpresa = it },
@@ -145,12 +164,12 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                                 colors = TextFieldDefaults.colors(
                                     if (isDarkModeEnabled) Color.White else Color.Black,
                                     if (isDarkModeEnabled) Color.LightGray else Color.Black
-                                )
+                                ),
+                                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
                             )
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            // Fila para Código Postal y RFC
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -167,7 +186,7 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                                     textStyle = LocalTextStyle.current.copy(color = if (isDarkModeEnabled) Color.White else Color.Black),
                                     modifier = Modifier.weight(1f),
                                     isError = cpError,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
                                     colors = TextFieldDefaults.colors(
                                         if (isDarkModeEnabled) Color.White else Color.Black,
                                         if (isDarkModeEnabled) Color.LightGray else Color.Black
@@ -186,6 +205,7 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                                     textStyle = LocalTextStyle.current.copy(color = if (isDarkModeEnabled) Color.White else Color.Black),
                                     modifier = Modifier.weight(1f),
                                     isError = rfcError,
+                                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
                                     colors = TextFieldDefaults.colors(
                                         if (isDarkModeEnabled) Color.White else Color.Black,
                                         if (isDarkModeEnabled) Color.LightGray else Color.Black
@@ -205,12 +225,12 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                                     text = "El RFC debe tener 13 caracteres",
                                     color = Color.Red,
                                     style = MaterialTheme.typography.bodySmall
+
                                 )
                             }
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            // Fila para Ciudad y Estado
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -242,7 +262,6 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            // Campo Dirección
                             OutlinedTextField(
                                 value = direccion,
                                 onValueChange = { direccion = it },
@@ -257,7 +276,6 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            // Campo País
                             OutlinedTextField(
                                 value = pais,
                                 onValueChange = { pais = it },
@@ -283,7 +301,9 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                                         "pais" to pais,
                                         "rfc" to rfc,
                                     )
-                                    // Guarda empresaData en Firebase u otra acción
+                                    saveCompanyData(db, empresaData) { companyCode ->
+                                        navController.navigate("login")
+                                    }
                                 },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = if (isDarkModeEnabled) Color(0xFF000000) else Color(0xFF0056E0),
