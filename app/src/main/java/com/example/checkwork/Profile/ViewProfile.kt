@@ -90,13 +90,17 @@ fun ProfileScreen(navController: NavHostController) {
             }
 
             if (role == "Administrador") {
-                db.collection("Company_code").document(userId).get()
-                    .addOnSuccessListener { document ->
-                        company_code = document.getString("company_code") ?: ""
+                // Obtiene el código de empresa del documento correspondiente en Company_Code
+                db.collection("Company_Code").whereEqualTo("company_code", company_code).get()
+                    .addOnSuccessListener { documents ->
+                        for (document in documents) {
+                            company_code = document.getString("company_code") ?: ""
+                        }
                     }
             }
         }
     }
+
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),

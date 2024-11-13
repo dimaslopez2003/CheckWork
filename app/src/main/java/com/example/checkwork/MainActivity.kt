@@ -13,12 +13,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.checkwork.CRUD_USERS.AdminCrudScreen
 import com.example.checkwork.Home.PantallaPrincipal
+import com.example.checkwork.JoinEmpresa.JoinEmpresaScreen
 import com.example.checkwork.Login.LoginScreen.LoginScreen
 import com.example.checkwork.NavigationRegister.CheckHistoryScreen
 import com.example.checkwork.Profile.AddNum
 import com.example.checkwork.Profile.ProfileScreen
+import com.example.checkwork.admin.AdminCrudScreen
 import com.example.checkwork.forgot.*
 import com.example.checkwork.form.FormularioEmpresaScreen
 import com.example.checkwork.supportview.SoporteScreen
@@ -68,6 +69,8 @@ class MainActivity : ComponentActivity() {
                 }
                 composable(route = "forgot_password_4") { ForgotPasswordUpdatedScreen(navController) }
                 composable(route = "crud") { AdminCrudScreen(navController) }
+                composable(route = "join_company") { JoinEmpresaScreen(navController)
+                }
             }
         }
     }

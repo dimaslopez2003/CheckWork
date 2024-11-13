@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.rememberImagePainter
+import com.example.checkwork.Checks.registrarEntradaSalida
 import com.example.checkwork.FunctionTime.getCurrentTime
 import com.example.checkwork.Navigation.BottomNavigationBar
 import com.example.checkwork.R
@@ -29,7 +30,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import com.example.checkwork.Checks.registrarEntradaSalida
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
@@ -47,27 +47,35 @@ fun PantallaPrincipal(navController: NavHostController) {
     var hasCheckedIn by remember { mutableStateOf(false) }
     var hasCheckedOut by remember { mutableStateOf(false) }
     var nombreEmpresa by remember { mutableStateOf("") }
+    var userRole by remember { mutableStateOf("") }
+    var companyCode by remember { mutableStateOf("") }
 
     val context = LocalContext.current
 
-    // Recuperar el estado del modo oscuro de Firebase
     LaunchedEffect(Unit) {
         val userId = auth.currentUser?.uid
         if (userId != null) {
-            // Obtener datos del usuario
             db.collection("users").document(userId).get()
                 .addOnSuccessListener { document ->
                     profileImageUrl = document.getString("profileImageUrl")
                     departamento = document.getString("departamento") ?: ""
                     username = document.getString("username") ?: ""
                     isDarkModeEnabled = document.getBoolean("darkModeEnabled") ?: false
+                    userRole = document.getString("rol") ?: ""
+                    companyCode = document.getString("company_code") ?: ""
+
+                    // Obtener el nombre de la empresa usando el companyCode
+                    if (companyCode.isNotEmpty()) {
+                        db.collection("Company_Code").document(companyCode).get()
+                            .addOnSuccessListener { companyDoc ->
+                                nombreEmpresa = companyDoc.getString("nombreEmpresa") ?: ""
+                            }
+                            .addOnFailureListener { e ->
+                                Log.e("Firestore", "Error al obtener el nombre de la empresa: ${e.message}")
+                            }
+                    }
                 }
                 .addOnFailureListener { Log.e("Firestore", "Error al obtener los datos del usuario") }
-            //obtener datos de la empresa
-            db.collection("Company_Code").document("COMP40666").get()
-                .addOnSuccessListener { document ->
-                    nombreEmpresa = document.getString("nombreEmpresa") ?: ""
-                }
         }
 
         while (true) {
@@ -76,7 +84,7 @@ fun PantallaPrincipal(navController: NavHostController) {
         }
     }
 
-    // Guardar estado del modo oscuro en Firebase
+
     fun updateDarkModePreferenceInFirebase(isDarkMode: Boolean) {
         auth.currentUser?.uid?.let { userId ->
             db.collection("users").document(userId).update("darkModeEnabled", isDarkMode)
@@ -105,7 +113,6 @@ fun PantallaPrincipal(navController: NavHostController) {
                 },
                 actions = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        // Foto de perfil o icono de cuenta predeterminado
                         if (profileImageUrl != null) {
                             Image(
                                 painter = rememberImagePainter(profileImageUrl),
@@ -125,13 +132,11 @@ fun PantallaPrincipal(navController: NavHostController) {
                                     .padding(8.dp)
                             )
                         }
-
-                        // Interruptor de modo oscuro
                         Switch(
                             checked = isDarkModeEnabled,
                             onCheckedChange = { isChecked ->
                                 isDarkModeEnabled = isChecked
-                                updateDarkModePreferenceInFirebase(isChecked) // Actualizar en Firebase
+                                updateDarkModePreferenceInFirebase(isChecked)
                             },
                             colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF0056E0))
                         )
@@ -140,7 +145,7 @@ fun PantallaPrincipal(navController: NavHostController) {
             )
         },
         drawerContent = {
-            DrawerContent(navController, username, departamento, isDarkModeEnabled) {
+            DrawerContent(navController, username, departamento, isDarkModeEnabled, userRole) {
                 isDarkModeEnabled = it
                 updateDarkModePreferenceInFirebase(it)
             }
@@ -156,11 +161,9 @@ fun PantallaPrincipal(navController: NavHostController) {
                 navController = navController,
                 isDarkModeEnabled = isDarkModeEnabled
             )
-
         }
     )
 }
-
 
 @Composable
 fun DrawerContent(
@@ -168,6 +171,7 @@ fun DrawerContent(
     username: String,
     departamento: String,
     isDarkModeEnabled: Boolean,
+    userRole: String,
     onDarkModeToggle: (Boolean) -> Unit
 ) {
     Column(
@@ -257,16 +261,26 @@ fun DrawerContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp)
-                .clickable { navController.navigate("form") }
+                .clickable {
+                    if (userRole == "Administrador") {
+                        navController.navigate("form")
+                    } else {
+                        navController.navigate("join_company")
+                    }
+                }
         ) {
             Icon(
-                imageVector = Icons.Filled.Edit,
-                contentDescription = "Registrar Empresa",
+                imageVector = if (userRole == "Administrador") Icons.Filled.Edit else Icons.Filled.GroupAdd,
+                contentDescription = if (userRole == "Administrador") "Registrar Empresa" else "Unirme a Empresa",
                 tint = if (isDarkModeEnabled) Color.LightGray else Color.White,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(16.dp))
-            Text(text = "Registrar Empresa", color = if (isDarkModeEnabled) Color.LightGray else Color.White, fontSize = 16.sp)
+            Text(
+                text = if (userRole == "Administrador") "Registrar Empresa" else "Unirme a Empresa",
+                color = if (isDarkModeEnabled) Color.LightGray else Color.White,
+                fontSize = 16.sp
+            )
         }
 
         Row(
@@ -302,6 +316,7 @@ fun DrawerContent(
         }
     }
 }
+
 @Composable
 fun ContentSection(
     username: String,

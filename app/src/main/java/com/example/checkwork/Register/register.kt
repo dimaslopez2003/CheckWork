@@ -202,7 +202,7 @@ fun RegisterScreen(navController: NavHostController) {
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Registrar")
+                    Text("Registrar", color = Color.White, fontSize = 14.sp)
                 }
 
                 if (errorMessage.isNotEmpty()) {
