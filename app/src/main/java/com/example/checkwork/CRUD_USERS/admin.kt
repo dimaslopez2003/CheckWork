@@ -7,8 +7,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -91,28 +94,32 @@ fun AdminCrudScreen(navController: NavHostController) {
             Surface(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(if (isDarkModeEnabled) Color(0xFF121212) else Color(0xFF66ABE3)),
-                color = if (isDarkModeEnabled) Color(0xFF121212) else Color(0xFF66ABE3)
+                    .background(if (isDarkModeEnabled) Color(0xFF121212) else Color(0xFFFFFFFF)),
+                color = if (isDarkModeEnabled) Color(0xFF121212) else Color(0xFFFFFFFF)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp),
-                    verticalArrangement = Arrangement.Center,
+                    verticalArrangement = Arrangement.Top,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text("Empleados en la empresa", style = MaterialTheme.typography.headlineMedium, color = if (isDarkModeEnabled) Color.White else Color.Black)
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Lista de empleados
-                    if (empleados.isNotEmpty()) {
-                        for (empleado in empleados) {
-                            EmployeeCard(empleado = empleado, isDarkModeEnabled = isDarkModeEnabled)
-                            Spacer(modifier = Modifier.height(8.dp))
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(8.dp)
+                    ) {
+                        items(empleados.size) { index ->
+                            EmployeeRow(
+                                empleado = empleados[index],
+                                isDarkModeEnabled = isDarkModeEnabled,
+                                navController = navController
+                            )
+                            Divider(color = if (isDarkModeEnabled) Color.Gray else Color.LightGray, thickness = 1.dp)
                         }
-                    } else {
-                        Text("No hay empleados asociados a esta empresa.", color = if (isDarkModeEnabled) Color.White else Color.Black)
                     }
                 }
             }
@@ -121,31 +128,44 @@ fun AdminCrudScreen(navController: NavHostController) {
 }
 
 @Composable
-fun EmployeeCard(empleado: Map<String, Any>, isDarkModeEnabled: Boolean) {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFFE0F7FA)
-        ),
+fun EmployeeRow(empleado: Map<String, Any>, isDarkModeEnabled: Boolean, navController: NavHostController) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        elevation = CardDefaults.cardElevation(8.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
+        // Información del empleado
         Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.Start
+            modifier = Modifier.weight(1f)
         ) {
             Text("ID: ${empleado["employeeId"]}", color = if (isDarkModeEnabled) Color.White else Color.Black)
             Text("Nombre: ${empleado["username"]}", color = if (isDarkModeEnabled) Color.White else Color.Black)
-            Text("Departamento: ${empleado["departamento"]}", color = if (isDarkModeEnabled) Color.White else Color.Black)
+            Text("Departamento: ${empleado["departamento"] ?: "N/A"}", color = if (isDarkModeEnabled) Color.White else Color.Black)
+        }
+        // Íconos de acción
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.End
+        ) {
+            IconButton(onClick = { /* Editar Acción */ }) {
+                Icon(Icons.Filled.Edit, contentDescription = "Editar", tint = if (isDarkModeEnabled) Color.White else Color.Black)
+            }
+            IconButton(onClick = { /* Eliminar Acción */ }) {
+                Icon(Icons.Filled.Delete, contentDescription = "Eliminar", tint = if (isDarkModeEnabled) Color.White else Color.Black)
+            }
+            //Boton que llevará a la vista de los registros de cada empleado
+            //IconButton(onClick = { navController.navigate("view_registers") }) {
+                Icon(Icons.Filled.Visibility, contentDescription = "Ver Registros", tint = if (isDarkModeEnabled) Color.White else Color.Black)
+            }
         }
     }
-}
 
 fun loadEmployees(db: FirebaseFirestore, companyCode: String, empleados: MutableList<Map<String, Any>>) {
     db.collection("users")
         .whereEqualTo("company_code", companyCode)
-        .whereEqualTo("rol", "empleado") // Verifica que el valor esté en minúsculas según la base de datos
+        .whereEqualTo("rol", "empleado")
         .get()
         .addOnSuccessListener { documents ->
             empleados.clear()
