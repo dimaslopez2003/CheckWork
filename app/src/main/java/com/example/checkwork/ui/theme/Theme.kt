@@ -1,41 +1,44 @@
+// theme.kt
 package com.example.checkwork.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import com.google.ai.client.generativeai.type.content
-
-private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFF3F51B5),
-    secondary = Color(0xFF673AB7),
-    background = Color(0xFF121212),
-    onPrimary = Color.White,
-    onSecondary = Color.Black
-)
 
 private val LightColorScheme = lightColorScheme(
     primary = Color(0xFF0056E0),
-    secondary = Color(0xFF0056E0),
-    background = Color(0xFFFFFFFF),
     onPrimary = Color.White,
-    onSecondary = Color.Black
+    secondary = Color(0xFF25BADB),
+    onSecondary = Color.White,
+    background = Color(0xFFF5F5F5),
+    surface = Color.White,
+    onBackground = Color.Black,
+    onSurface = Color.Black
+)
+
+private val DarkColorScheme = darkColorScheme(
+    primary = Color(0xFF00031B),
+    onPrimary = Color.White,
+    secondary = Color(0xFF262F80),
+    onSecondary = Color.White,
+    background = Color(0xFFE0F7FA),
+    surface = Color(0xFF1E1E1E),
+    onBackground = Color.White,
+    onSurface = Color.White
 )
 
 @Composable
-fun CheckWorkTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit
-) {
+fun DarkMode (darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
     val colors = if (darkTheme) {
-        DarkColorScheme
-    } else {
         LightColorScheme
+    } else {
+        DarkColorScheme
     }
 
     MaterialTheme(
         colorScheme = colors,
-        typography = Typography,  // Tipografía personalizada si tienes alguna
+        typography = Typography,
         content = content
     )
 }

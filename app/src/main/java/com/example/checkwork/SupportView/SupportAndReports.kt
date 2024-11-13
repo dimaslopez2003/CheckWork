@@ -1,4 +1,4 @@
-package com.example.checkwork.supportview // Cambiado a minúsculas
+package com.example.checkwork.supportview
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
@@ -18,41 +18,68 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-
-
-
 fun SoporteScreen(navController: NavHostController) {
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
+
+    var isDarkModeEnabled by remember { mutableStateOf(false) }
     var nombre by remember { mutableStateOf("") }
     var correo by remember { mutableStateOf("") }
     var mensaje by remember { mutableStateOf("") }
     var error by remember { mutableStateOf("") }
 
+    // Recuperar el estado de modo oscuro de Firebase
+    LaunchedEffect(Unit) {
+        val userId = auth.currentUser?.uid
+        if (userId != null) {
+            db.collection("users").document(userId).get().addOnSuccessListener { document ->
+                isDarkModeEnabled = document.getBoolean("darkModeEnabled") ?: false
+            }
+        }
+    }
+
+    // Guardar estado del modo oscuro en Firebase
+    fun updateDarkModePreferenceInFirebase(isDarkMode: Boolean) {
+        auth.currentUser?.uid?.let { userId ->
+            db.collection("users").document(userId).update("darkModeEnabled", isDarkMode)
+        }
+    }
 
     Scaffold(
-            topBar = {
-                androidx.compose.material.TopAppBar(
-                    title = { androidx.compose.material.Text("Soporte y asistencia", color = Color.White) },
-                    backgroundColor = Color(0xFF0056E0),
-                    navigationIcon = {
-                        androidx.compose.material.IconButton(onClick = { navController.popBackStack() }) {
-                            androidx.compose.material.Icon(
-                                Icons.Default.ArrowBack,
-                                contentDescription = "Regresar",
-                                tint = Color.White
-                            )
-                        }
+        topBar = {
+            TopAppBar(
+                title = { Text("Soporte y asistencia", color = Color.White) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0)
+                ),
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Regresar", tint = Color.White)
                     }
-                )
-            },
+                },
+                actions = {
+                    Switch(
+                        checked = isDarkModeEnabled,
+                        onCheckedChange = {
+                            isDarkModeEnabled = it
+                            updateDarkModePreferenceInFirebase(it)
+                        },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF0056E0))
+                    )
+                }
+            )
+        },
         content = { paddingValues ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFE0F7FA))
+                    .background(if (isDarkModeEnabled) Color(0xFF121212) else Color(0xFFE0F7FA))
                     .padding(paddingValues)
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -61,7 +88,7 @@ fun SoporteScreen(navController: NavHostController) {
                     text = "Contáctanos para asistencia",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF0056E0),
+                    color = if (isDarkModeEnabled) Color.White else Color(0xFF0056E0),
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -72,42 +99,56 @@ fun SoporteScreen(navController: NavHostController) {
                 OutlinedTextField(
                     value = nombre,
                     onValueChange = { nombre = it },
-                    label = { Text("Nombre completo") },
+                    label = { Text("Nombre completo")},
+                    textStyle = LocalTextStyle.current.copy(color = if (isDarkModeEnabled) Color.White else Color.Black),
                     leadingIcon = {
-                        Icon(Icons.Filled.Person, contentDescription = "Nombre Icono")
+                        Icon(Icons.Filled.Person, contentDescription = "Nombre Icono", tint = if (isDarkModeEnabled) Color.Black else Color.Black)
                     },
                     shape = CircleShape,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp),
-
+                    colors = TextFieldDefaults.colors(
+                        if (isDarkModeEnabled) Color.Black else Color.Black,
+                        if (isDarkModeEnabled) Color.LightGray else Color.Black
+                    )
                 )
 
                 // Campo de Correo Electrónico con Icono
                 OutlinedTextField(
                     value = correo,
                     onValueChange = { correo = it },
-                    label = { Text("Correo electrónico") },
+                    label = { Text("Correo electrónico")},
+                    textStyle = LocalTextStyle.current.copy(color = if (isDarkModeEnabled) Color.White else Color.Black),
                     leadingIcon = {
-                        Icon(Icons.Filled.Email, contentDescription = "Correo Icono")
+                        Icon(Icons.Filled.Email, contentDescription = "Correo Icono", tint = if (isDarkModeEnabled) Color.Black else Color.Black)
                     },
                     shape = CircleShape,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
+                        .padding(vertical = 8.dp),
+                    colors = TextFieldDefaults.colors(
+                        if (isDarkModeEnabled) Color.White else Color.Black,
+                        if (isDarkModeEnabled) Color.LightGray else Color.Black
+                    )
                 )
 
                 // Campo de Mensaje con más líneas
                 OutlinedTextField(
                     value = mensaje,
                     onValueChange = { mensaje = it },
-                    label = { Text("Mensaje") },
+                    label = { Text("Mensaje")},
+                    textStyle = LocalTextStyle.current.copy(color = if (isDarkModeEnabled) Color.White else Color.Black),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(150.dp)
                         .padding(vertical = 8.dp),
                     maxLines = 5,
                     shape = MaterialTheme.shapes.medium,
+                    colors = TextFieldDefaults.colors(
+                    if (isDarkModeEnabled) Color.White else Color.Black,
+                        if (isDarkModeEnabled) Color.LightGray else Color.Black
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -116,14 +157,14 @@ fun SoporteScreen(navController: NavHostController) {
                 Button(
                     onClick = {
                         if (nombre.isNotEmpty() && correo.isNotEmpty() && mensaje.isNotEmpty()) {
-                            // Lógica de envío del mensaje
                             navController.navigate("dashboard") // Regresar a la pantalla principal
                         } else {
                             error = "Por favor completa todos los campos."
                         }
                     },
                     shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0056E0)),
+                    colors = ButtonDefaults.buttonColors(containerColor = if (isDarkModeEnabled) Color(0xFF000000)
+                    else Color(0xFF0056E0)),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp)

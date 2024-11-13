@@ -37,13 +37,15 @@ data class CheckEntry(
 fun CheckHistoryScreen(navController: NavHostController) {
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
+
     var profileImageUrl by remember { mutableStateOf<String?>(null) }
     var employeeId by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var departamento by remember { mutableStateOf("") }
     var checkEntries by remember { mutableStateOf(listOf<CheckEntry>()) }
+    var isDarkModeEnabled by remember { mutableStateOf(false) }
 
-    // Obtener datos del usuario y los registros de entrada/salida
+    // Recuperar el estado de modo oscuro de Firebase
     LaunchedEffect(Unit) {
         val userId = auth.currentUser?.uid
         if (userId != null) {
@@ -52,6 +54,7 @@ fun CheckHistoryScreen(navController: NavHostController) {
                 username = document.getString("username") ?: ""
                 employeeId = document.getString("employeeId") ?: ""
                 departamento = document.getString("departamento") ?: ""
+                isDarkModeEnabled = document.getBoolean("darkModeEnabled") ?: false  // Obtener el estado del modo oscuro
 
                 if (employeeId.isNotEmpty()) {
                     db.collection("checks").whereEqualTo("employeeId", employeeId).get()
@@ -69,15 +72,33 @@ fun CheckHistoryScreen(navController: NavHostController) {
         }
     }
 
+    // Guardar estado del modo oscuro en Firebase
+    fun updateDarkModePreferenceInFirebase(isDarkMode: Boolean) {
+        auth.currentUser?.uid?.let { userId ->
+            db.collection("users").document(userId).update("darkModeEnabled", isDarkMode)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Historial de Entradas y Salidas", color = Color.White) },
-                backgroundColor = Color(0xFF0056E0),
+                backgroundColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Volver", tint = Color.White)
                     }
+                },
+                actions = {
+                    // Interruptor de modo oscuro en la barra superior
+                    Switch(
+                        checked = isDarkModeEnabled,
+                        onCheckedChange = {
+                            isDarkModeEnabled = it
+                            updateDarkModePreferenceInFirebase(it) // Guardar el estado en Firebase
+                        },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF0056E0))
+                    )
                 }
             )
         },
@@ -85,7 +106,7 @@ fun CheckHistoryScreen(navController: NavHostController) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFE0F7FA))
+                    .background(if (isDarkModeEnabled) Color(0xFF121212) else Color(0xFFE0F7FA))
                     .padding(16.dp)
             ) {
                 // Card del perfil
@@ -94,7 +115,8 @@ fun CheckHistoryScreen(navController: NavHostController) {
                         .fillMaxWidth()
                         .padding(16.dp),
                     shape = RoundedCornerShape(8.dp),
-                    elevation = 4.dp
+                    elevation = 4.dp,
+                    backgroundColor = if (isDarkModeEnabled) Color(0xFF303030) else Color.White
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
@@ -114,7 +136,7 @@ fun CheckHistoryScreen(navController: NavHostController) {
                                 imageVector = Icons.Filled.AccountCircle,
                                 contentDescription = "Imagen de Perfil",
                                 modifier = Modifier.size(80.dp),
-                                tint = Color.Gray
+                                tint = if (isDarkModeEnabled) Color.Gray else Color.Black
                             )
                         }
                         Spacer(modifier = Modifier.width(16.dp))
@@ -122,14 +144,14 @@ fun CheckHistoryScreen(navController: NavHostController) {
                             Text(
                                 text = departamento,
                                 fontSize = 16.sp,
-                                color = Color.Gray,
+                                color = if (isDarkModeEnabled) Color.LightGray else Color.Gray,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
                                 text = username,
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.Black
+                                color = if (isDarkModeEnabled) Color.White else Color.Black
                             )
                         }
                     }
@@ -137,12 +159,13 @@ fun CheckHistoryScreen(navController: NavHostController) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Card para la lista de registros
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp),
                     shape = RoundedCornerShape(8.dp),
-                    backgroundColor = Color.White,
+                    backgroundColor = if (isDarkModeEnabled) Color(0xFF303030) else Color.White,
                     elevation = 4.dp
                 ) {
                     Column(modifier = Modifier.padding(8.dp)) {
@@ -153,11 +176,11 @@ fun CheckHistoryScreen(navController: NavHostController) {
                                 .padding(vertical = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            TableHeader("Fecha")
-                            TableHeader("Hora")
-                            TableHeader("Tipo")
+                            TableHeader("Fecha", isDarkModeEnabled)
+                            TableHeader("Hora", isDarkModeEnabled)
+                            TableHeader("Tipo", isDarkModeEnabled)
                         }
-                        Divider(color = Color.Gray)
+                        Divider(color = if (isDarkModeEnabled) Color.Gray else Color.LightGray)
 
                         checkEntries.forEach { entry ->
                             Row(
@@ -166,38 +189,37 @@ fun CheckHistoryScreen(navController: NavHostController) {
                                     .padding(vertical = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                TableCell(entry.fecha)
-                                TableCell(entry.hora)
-                                TableCell(
-                                    text = entry.tipo.replaceFirstChar { it.uppercase() },
-                                    backgroundColor = if (entry.tipo.lowercase() == "entrada") Color(0xFF4CAF50) else Color(0xFFF44336),
-                                    textColor = Color.White
-                                )
+                                TableCell(entry.fecha, isDarkModeEnabled)
+                                TableCell(entry.hora, isDarkModeEnabled)
+                                TableCell(entry.tipo, isDarkModeEnabled)
                             }
-                            Divider(color = Color.LightGray)
+                            Divider(color = if (isDarkModeEnabled) Color.Gray else Color.LightGray)
                         }
                     }
                 }
             }
         },
         bottomBar = {
-            BottomNavigationBar(navController = navController)
+            BottomNavigationBar(
+                navController = navController,
+                isDarkModeEnabled = isDarkModeEnabled
+            )
         }
     )
 }
 
 @Composable
-fun TableHeader(text: String) {
+fun TableHeader(text: String, isDarkModeEnabled: Boolean) {
     Text(
         text = text,
         fontWeight = FontWeight.Bold,
-        color = Color.Black,
+        color = if (isDarkModeEnabled) Color.LightGray else Color.Black,
         fontSize = 16.sp
     )
 }
 
 @Composable
-fun TableCell(text: String, backgroundColor: Color = Color.Transparent, textColor: Color = Color.Black) {
+fun TableCell(text: String, isDarkModeEnabled: Boolean, backgroundColor: Color = Color.Transparent, textColor: Color = if (isDarkModeEnabled) Color.LightGray else Color.Black) {
     Box(
         modifier = Modifier
             .background(backgroundColor)

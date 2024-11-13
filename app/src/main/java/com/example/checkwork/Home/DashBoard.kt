@@ -22,28 +22,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.rememberImagePainter
+import com.example.checkwork.Checks.registrarEntradaSalida
 import com.example.checkwork.FunctionTime.getCurrentTime
 import com.example.checkwork.Navigation.BottomNavigationBar
 import com.example.checkwork.R
-import com.example.checkwork.ui.theme.CheckWorkTheme
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import com.example.checkwork.Checks.registrarEntradaSalida
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
-fun PantallaPrincipal(navController: NavHostController, s: String) {
-
+fun PantallaPrincipal(navController: NavHostController) {
     val systemUiController = rememberSystemUiController()
-    systemUiController.setSystemBarsColor(color = Color(0xFF0056E0))
-
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
-    val storage = FirebaseStorage.getInstance()
 
     var username by remember { mutableStateOf("") }
     var departamento by remember { mutableStateOf("") }
@@ -52,6 +46,9 @@ fun PantallaPrincipal(navController: NavHostController, s: String) {
     var profileImageUrl by remember { mutableStateOf<String?>(null) }
     var hasCheckedIn by remember { mutableStateOf(false) }
     var hasCheckedOut by remember { mutableStateOf(false) }
+    var nombreEmpresa by remember { mutableStateOf("") }
+    var userRole by remember { mutableStateOf("") }
+    var companyCode by remember { mutableStateOf("") }
 
     val context = LocalContext.current
 
@@ -63,8 +60,22 @@ fun PantallaPrincipal(navController: NavHostController, s: String) {
                     profileImageUrl = document.getString("profileImageUrl")
                     departamento = document.getString("departamento") ?: ""
                     username = document.getString("username") ?: ""
+                    isDarkModeEnabled = document.getBoolean("darkModeEnabled") ?: false
+                    userRole = document.getString("rol") ?: ""
+                    companyCode = document.getString("company_code") ?: ""
+
+                    // Obtener el nombre de la empresa usando el companyCode
+                    if (companyCode.isNotEmpty()) {
+                        db.collection("Company_Code").document(companyCode).get()
+                            .addOnSuccessListener { companyDoc ->
+                                nombreEmpresa = companyDoc.getString("nombreEmpresa") ?: ""
+                            }
+                            .addOnFailureListener { e ->
+                                Log.e("Firestore", "Error al obtener el nombre de la empresa: ${e.message}")
+                            }
+                    }
                 }
-                .addOnFailureListener { Log.e("Firestore", "Error al obtener los datos") }
+                .addOnFailureListener { Log.e("Firestore", "Error al obtener los datos del usuario") }
         }
 
         while (true) {
@@ -73,24 +84,35 @@ fun PantallaPrincipal(navController: NavHostController, s: String) {
         }
     }
 
+
+    fun updateDarkModePreferenceInFirebase(isDarkMode: Boolean) {
+        auth.currentUser?.uid?.let { userId ->
+            db.collection("users").document(userId).update("darkModeEnabled", isDarkMode)
+        }
+    }
+
     val scaffoldState = rememberScaffoldState()
     val coroutineScope = rememberCoroutineScope()
 
-    CheckWorkTheme(darkTheme = isDarkModeEnabled) {
-        Scaffold(
-            scaffoldState = scaffoldState,
-            topBar = {
-                TopAppBar(
-                    title = { Text("WorkCheckApp", color = Color.White) },
-                    backgroundColor = Color(0xFF0056E0),
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            coroutineScope.launch { scaffoldState.drawerState.open() }
-                        }) {
-                            Icon(Icons.Filled.Menu, contentDescription = "Menú", tint = Color.White)
-                        }
-                    },
-                    actions = {
+    systemUiController.setSystemBarsColor(
+        color = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0)
+    )
+
+    Scaffold(
+        scaffoldState = scaffoldState,
+        topBar = {
+            TopAppBar(
+                title = { Text("WorkCheckApp", color = Color.White) },
+                backgroundColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0),
+                navigationIcon = {
+                    IconButton(onClick = {
+                        coroutineScope.launch { scaffoldState.drawerState.open() }
+                    }) {
+                        Icon(Icons.Filled.Menu, contentDescription = "Menú", tint = Color.White)
+                    }
+                },
+                actions = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         if (profileImageUrl != null) {
                             Image(
                                 painter = rememberImagePainter(profileImageUrl),
@@ -110,25 +132,37 @@ fun PantallaPrincipal(navController: NavHostController, s: String) {
                                     .padding(8.dp)
                             )
                         }
+                        Switch(
+                            checked = isDarkModeEnabled,
+                            onCheckedChange = { isChecked ->
+                                isDarkModeEnabled = isChecked
+                                updateDarkModePreferenceInFirebase(isChecked)
+                            },
+                            colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF0056E0))
+                        )
                     }
-                )
-            },
-            drawerContent = {
-                DrawerContent(navController, username, departamento, isDarkModeEnabled) {
-                    isDarkModeEnabled = it
                 }
-            },
-            content = {
-                ContentSection(username, departamento, currentTime, context, hasCheckedIn, hasCheckedOut) {
-                    hasCheckedIn = it.first
-                    hasCheckedOut = it.second
-                }
-            },
-            bottomBar = {
-                BottomNavigationBar(navController = navController)
+            )
+        },
+        drawerContent = {
+            DrawerContent(navController, username, departamento, isDarkModeEnabled, userRole) {
+                isDarkModeEnabled = it
+                updateDarkModePreferenceInFirebase(it)
             }
-        )
-    }
+        },
+        content = {
+            ContentSection(username, currentTime, nombreEmpresa, context, hasCheckedIn, hasCheckedOut) {
+                hasCheckedIn = it.first
+                hasCheckedOut = it.second
+            }
+        },
+        bottomBar = {
+            BottomNavigationBar(
+                navController = navController,
+                isDarkModeEnabled = isDarkModeEnabled
+            )
+        }
+    )
 }
 
 @Composable
@@ -137,16 +171,17 @@ fun DrawerContent(
     username: String,
     departamento: String,
     isDarkModeEnabled: Boolean,
+    userRole: String,
     onDarkModeToggle: (Boolean) -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF042159))
+            .background(if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF042159))
             .padding(16.dp)
     ) {
         Image(
-            painter = painterResource(id = R.drawable.logo),  // Assuming logo is stored in res/drawable/logo.png
+            painter = painterResource(id = R.drawable.logo),
             contentDescription = "Logo",
             modifier = Modifier
                 .size(80.dp)
@@ -156,14 +191,16 @@ fun DrawerContent(
 
         Text(
             text = departamento,
-            style = MaterialTheme.typography.h6.copy(color = Color.White),
+            style = MaterialTheme.typography.h6.copy(color = if (isDarkModeEnabled) Color.LightGray else Color.White),
             modifier = Modifier.padding(bottom = 16.dp)
         )
         Text(
             text = username,
-            style = MaterialTheme.typography.body1.copy(color = Color.White),
+            style = MaterialTheme.typography.body1.copy(color = if (isDarkModeEnabled) Color.LightGray else Color.White),
             modifier = Modifier.padding(bottom = 16.dp)
         )
+
+        Spacer(modifier = Modifier.width(16.dp))
 
         Row(
             modifier = Modifier
@@ -174,15 +211,15 @@ fun DrawerContent(
             Icon(
                 imageVector = Icons.Filled.AccountCircle,
                 contentDescription = "Perfil",
-                tint = Color.White,
+                tint = if (isDarkModeEnabled) Color.LightGray else Color.White,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column {
-                Text(text = "Perfil", color = Color.White, fontSize = 16.sp)
+                Text(text = "Perfil", color = if (isDarkModeEnabled) Color.LightGray else Color.White, fontSize = 16.sp)
                 Text(
                     text = "Agrega una foto para identificarte.",
-                    color = Color.White.copy(alpha = 0.7f),
+                    color = if (isDarkModeEnabled) Color.Gray else Color.White.copy(alpha = 0.7f),
                     fontSize = 12.sp
                 )
             }
@@ -190,7 +227,7 @@ fun DrawerContent(
 
         Divider(
             modifier = Modifier.padding(vertical = 16.dp),
-            color = Color.White.copy(alpha = 0.3f)
+            color = if (isDarkModeEnabled) Color.Gray else Color.White.copy(alpha = 0.3f)
         )
 
         Row(
@@ -201,15 +238,15 @@ fun DrawerContent(
             Icon(
                 imageVector = Icons.Filled.Brightness2,
                 contentDescription = "Modo Oscuro",
-                tint = Color.White,
+                tint = if (isDarkModeEnabled) Color.LightGray else Color.White,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = "Modo Oscuro", color = Color.White, fontSize = 16.sp)
+                Text(text = "Modo Oscuro", color = if (isDarkModeEnabled) Color.LightGray else Color.White, fontSize = 16.sp)
                 Text(
                     text = "Para descansar tu vista activa modo oscuro.",
-                    color = Color.White.copy(alpha = 0.7f),
+                    color = if (isDarkModeEnabled) Color.Gray else Color.White.copy(alpha = 0.7f),
                     fontSize = 12.sp
                 )
             }
@@ -224,16 +261,26 @@ fun DrawerContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp)
-                .clickable { navController.navigate("form") }
+                .clickable {
+                    if (userRole == "Administrador") {
+                        navController.navigate("form")
+                    } else {
+                        navController.navigate("join_company")
+                    }
+                }
         ) {
             Icon(
-                imageVector = Icons.Filled.Edit,
-                contentDescription = "Registrar Empresa",
-                tint = Color.White,
+                imageVector = if (userRole == "Administrador") Icons.Filled.Edit else Icons.Filled.GroupAdd,
+                contentDescription = if (userRole == "Administrador") "Registrar Empresa" else "Unirme a Empresa",
+                tint = if (isDarkModeEnabled) Color.LightGray else Color.White,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(16.dp))
-            Text(text = "Registrar Empresa", color = Color.White, fontSize = 16.sp)
+            Text(
+                text = if (userRole == "Administrador") "Registrar Empresa" else "Unirme a Empresa",
+                color = if (isDarkModeEnabled) Color.LightGray else Color.White,
+                fontSize = 16.sp
+            )
         }
 
         Row(
@@ -245,11 +292,11 @@ fun DrawerContent(
             Icon(
                 imageVector = Icons.Filled.Help,
                 contentDescription = "Soporte y Asistencia",
-                tint = Color.White,
+                tint = if (isDarkModeEnabled) Color.LightGray else Color.White,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(16.dp))
-            Text(text = "Soporte y Asistencia", color = Color.White, fontSize = 16.sp)
+            Text(text = "Soporte y Asistencia", color = if (isDarkModeEnabled) Color.LightGray else Color.White, fontSize = 16.sp)
         }
 
         Row(
@@ -261,11 +308,11 @@ fun DrawerContent(
             Icon(
                 imageVector = Icons.Filled.ExitToApp,
                 contentDescription = "Cerrar Sesión",
-                tint = Color.White,
+                tint = if (isDarkModeEnabled) Color.LightGray else Color.White,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(16.dp))
-            Text(text = "Cerrar Sesión", color = Color.White, fontSize = 16.sp)
+            Text(text = "Cerrar Sesión", color = if (isDarkModeEnabled) Color.LightGray else Color.White, fontSize = 16.sp)
         }
     }
 }
@@ -273,8 +320,8 @@ fun DrawerContent(
 @Composable
 fun ContentSection(
     username: String,
-    departamento: String,
     currentTime: String,
+    nombreEmpresa: String,
     context: android.content.Context,
     hasCheckedIn: Boolean,
     hasCheckedOut: Boolean,
@@ -287,6 +334,30 @@ fun ContentSection(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(8.dp),
+            backgroundColor = Color(0xFFF0F0F0),
+
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Company: ",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = nombreEmpresa,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
         Card(
             modifier = Modifier
                 .fillMaxWidth()
