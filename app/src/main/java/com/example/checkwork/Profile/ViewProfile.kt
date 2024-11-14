@@ -32,6 +32,7 @@ import com.example.checkwork.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.delay
 import java.io.ByteArrayOutputStream
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
@@ -56,6 +57,8 @@ fun ProfileScreen(navController: NavHostController) {
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     var cameraPermissionGranted by remember { mutableStateOf(false) }
     var storagePermissionGranted by remember { mutableStateOf(false) }
+    var isBackButtonEnabled by remember { mutableStateOf(true) }
+
 
     val permissionsLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
@@ -100,6 +103,10 @@ fun ProfileScreen(navController: NavHostController) {
             }
         }
     }
+    LaunchedEffect(Unit) {
+        delay(500)
+        isBackButtonEnabled = true
+    }
 
 
     val galleryLauncher = rememberLauncherForActivityResult(
@@ -130,9 +137,15 @@ fun ProfileScreen(navController: NavHostController) {
                 title = { Text("Perfil", color = Color.White) },
                 backgroundColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0),
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = {
+                        if (isBackButtonEnabled) {
+                            isBackButtonEnabled = false
+                            navController.popBackStack()
+                        }
+                    })
+                    {
                         Icon(
-                            Icons.Filled.Logout,
+                            Icons.Filled.ArrowBack,
                             contentDescription = "Regresar",
                             tint = Color.White
                         )

@@ -118,10 +118,9 @@ dependencies {
     implementation(libs.google.firebase.firestore.ktx)
 
 
-    val nav_version = "2.6.0" // O la versión que quieras usar
+    val nav_version = "2.6.0"
     implementation("androidx.navigation:navigation-fragment-ktx:$nav_version")
     implementation("androidx.navigation:navigation-ui-ktx:$nav_version")
 
 }
-
 
