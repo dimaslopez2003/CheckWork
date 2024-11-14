@@ -25,6 +25,7 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.delay
 
 class FormularioEmpresaActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,6 +54,7 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
     var cpError by remember { mutableStateOf(false) }
     var rfcError by remember { mutableStateOf(false) }
     var showDialog by remember { mutableStateOf(false) }
+    var isBackButtonEnabled by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         val userId = auth.currentUser?.uid
@@ -61,6 +63,8 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                 isDarkModeEnabled = document.getBoolean("darkModeEnabled") ?: false
             }
         }
+        delay(500) // Espera medio segundo antes de habilitar el botón de nuevo
+        isBackButtonEnabled = true
     }
 
     fun updateDarkModePreferenceInFirebase(isDarkMode: Boolean) {
@@ -108,12 +112,14 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                     containerColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0)
                 ),
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            Icons.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White
-                        )
+                    IconButton(onClick =
+                    {
+                        if (isBackButtonEnabled){
+                            isBackButtonEnabled = false
+                            navController.popBackStack()
+                        }
+                    }){
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Regresar", tint = Color.White)
                     }
                 },
                 actions = {

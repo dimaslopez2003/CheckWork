@@ -8,8 +8,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -43,7 +41,6 @@ fun AdminCrudScreen(navController: NavHostController) {
     var companyCode by remember { mutableStateOf("") }
     val empleados = remember { mutableStateListOf<Map<String, Any>>() }
 
-    // Observa cambios en companyCode y recarga los empleados
     LaunchedEffect(companyCode) {
         if (companyCode.isNotEmpty()) {
             loadEmployees(db, companyCode, empleados)
@@ -51,7 +48,6 @@ fun AdminCrudScreen(navController: NavHostController) {
     }
 
     LaunchedEffect(Unit) {
-        // Obtener el código de la empresa del administrador
         val userId = auth.currentUser?.uid
         if (userId != null) {
             db.collection("users").document(userId).get()
@@ -116,7 +112,8 @@ fun AdminCrudScreen(navController: NavHostController) {
                             EmployeeRow(
                                 empleado = empleados[index],
                                 isDarkModeEnabled = isDarkModeEnabled,
-                                navController = navController
+                                db = db,
+                                onUpdate = { loadEmployees(db, companyCode, empleados) } // Refresca al editar o eliminar
                             )
                             Divider(color = if (isDarkModeEnabled) Color.Gray else Color.LightGray, thickness = 1.dp)
                         }
@@ -128,7 +125,18 @@ fun AdminCrudScreen(navController: NavHostController) {
 }
 
 @Composable
-fun EmployeeRow(empleado: Map<String, Any>, isDarkModeEnabled: Boolean, navController: NavHostController) {
+fun EmployeeRow(empleado: Map<String, Any>, isDarkModeEnabled: Boolean, db: FirebaseFirestore, onUpdate: () -> Unit) {
+    var showEditDialog by remember { mutableStateOf(false) }
+    if (showEditDialog) {
+        EditEmployeeDialog(
+            empleado = empleado,
+            onDismiss = {
+                showEditDialog = false
+                onUpdate() // Refresca después de editar
+            },
+            db = db
+        )
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -136,7 +144,6 @@ fun EmployeeRow(empleado: Map<String, Any>, isDarkModeEnabled: Boolean, navContr
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        // Información del empleado
         Column(
             modifier = Modifier.weight(1f)
         ) {
@@ -144,23 +151,93 @@ fun EmployeeRow(empleado: Map<String, Any>, isDarkModeEnabled: Boolean, navContr
             Text("Nombre: ${empleado["username"]}", color = if (isDarkModeEnabled) Color.White else Color.Black)
             Text("Departamento: ${empleado["departamento"] ?: "N/A"}", color = if (isDarkModeEnabled) Color.White else Color.Black)
         }
-        // Íconos de acción
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.End
         ) {
-            IconButton(onClick = { /* Editar Acción */ }) {
+            IconButton(onClick = { showEditDialog = true }) {
                 Icon(Icons.Filled.Edit, contentDescription = "Editar", tint = if (isDarkModeEnabled) Color.White else Color.Black)
             }
-            IconButton(onClick = { /* Eliminar Acción */ }) {
+            IconButton(onClick = {
+                removeCompanyCodeFromEmployee(db, empleado["documentId"].toString(), onUpdate)
+            }) {
                 Icon(Icons.Filled.Delete, contentDescription = "Eliminar", tint = if (isDarkModeEnabled) Color.White else Color.Black)
-            }
-            //Boton que llevará a la vista de los registros de cada empleado
-            //IconButton(onClick = { navController.navigate("view_registers") }) {
-                Icon(Icons.Filled.Visibility, contentDescription = "Ver Registros", tint = if (isDarkModeEnabled) Color.White else Color.Black)
             }
         }
     }
+}
+
+@Composable
+fun EditEmployeeDialog(empleado: Map<String, Any>, onDismiss: () -> Unit, db: FirebaseFirestore) {
+    var newUsername by remember { mutableStateOf(empleado["username"].toString()) }
+    var newEmployeeId by remember { mutableStateOf(empleado["employeeId"].toString()) }
+    var newDepartamento by remember { mutableStateOf(empleado["departamento"]?.toString() ?: "") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Editar Empleado") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = newUsername,
+                    onValueChange = { newUsername = it },
+                    label = { Text("Nombre") }
+                )
+                OutlinedTextField(
+                    value = newEmployeeId,
+                    onValueChange = { newEmployeeId = it },
+                    label = { Text("ID de Empleado") }
+                )
+                OutlinedTextField(
+                    value = newDepartamento,
+                    onValueChange = { newDepartamento = it },
+                    label = { Text("Departamento") }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    updateEmployeeInFirebase(db, empleado["documentId"].toString(), newUsername, newEmployeeId, newDepartamento)
+                    onDismiss()
+                }
+            ) {
+                Text("Guardar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+fun updateEmployeeInFirebase(db: FirebaseFirestore, documentId: String, username: String, employeeId: String, departamento: String) {
+    val updatedData = mapOf(
+        "username" to username,
+        "employeeId" to employeeId,
+        "departamento" to departamento
+    )
+    db.collection("users").document(documentId).update(updatedData)
+        .addOnSuccessListener {
+            Log.d("Firestore", "Empleado actualizado exitosamente")
+        }
+        .addOnFailureListener { e ->
+            Log.e("Firestore", "Error al actualizar el empleado", e)
+        }
+}
+
+fun removeCompanyCodeFromEmployee(db: FirebaseFirestore, documentId: String, onUpdate: () -> Unit) {
+    db.collection("users").document(documentId).update("company_code", null)
+        .addOnSuccessListener {
+            Log.d("Firestore", "Código de la empresa eliminado del empleado")
+            onUpdate() // Refresca la lista después de eliminar el company_code
+        }
+        .addOnFailureListener { e ->
+            Log.e("Firestore", "Error al eliminar el código de la empresa", e)
+        }
+}
 
 fun loadEmployees(db: FirebaseFirestore, companyCode: String, empleados: MutableList<Map<String, Any>>) {
     db.collection("users")
@@ -170,7 +247,9 @@ fun loadEmployees(db: FirebaseFirestore, companyCode: String, empleados: Mutable
         .addOnSuccessListener { documents ->
             empleados.clear()
             for (document in documents) {
-                empleados.add(document.data)
+                val employeeData = document.data.toMutableMap()
+                employeeData["documentId"] = document.id
+                empleados.add(employeeData)
             }
         }
         .addOnFailureListener { e ->

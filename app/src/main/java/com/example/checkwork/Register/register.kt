@@ -22,6 +22,7 @@ import androidx.navigation.NavHostController
 import com.example.checkwork.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
@@ -38,9 +39,16 @@ fun RegisterScreen(navController: NavHostController) {
     var selectedRole by remember { mutableStateOf("Empleado") }
     var passwordVisible by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
+    var isBackButtonEnabled by remember { mutableStateOf(true) }
 
     val scaffoldState = rememberScaffoldState()
     val coroutineScope = rememberCoroutineScope()
+
+
+    LaunchedEffect(Unit) {
+        delay(500)
+        isBackButtonEnabled = true
+    }
 
     Scaffold(
         scaffoldState = scaffoldState,
@@ -49,8 +57,13 @@ fun RegisterScreen(navController: NavHostController) {
                 title = { Text("Registro", color = Color.White) },
                 backgroundColor = Color(0xFF0056E0),
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Regresar", tint = Color.White)
+                    IconButton(onClick = {
+                        if (isBackButtonEnabled) {
+                            isBackButtonEnabled = false
+                            navController.popBackStack()
+                        }
+                    }) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Regresar", tint = Color.White)
                     }
                 }
             )

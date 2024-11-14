@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.delay
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,6 +34,7 @@ fun SoporteScreen(navController: NavHostController) {
     var correo by remember { mutableStateOf("") }
     var mensaje by remember { mutableStateOf("") }
     var error by remember { mutableStateOf("") }
+    var isBackButtonEnabled by remember { mutableStateOf(true) }
 
     // Recuperar el estado de modo oscuro de Firebase
     LaunchedEffect(Unit) {
@@ -42,6 +44,10 @@ fun SoporteScreen(navController: NavHostController) {
                 isDarkModeEnabled = document.getBoolean("darkModeEnabled") ?: false
             }
         }
+    }
+    LaunchedEffect(Unit) {
+        delay(500)
+        isBackButtonEnabled = true
     }
 
     // Guardar estado del modo oscuro en Firebase
@@ -59,8 +65,17 @@ fun SoporteScreen(navController: NavHostController) {
                     containerColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0)
                 ),
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Regresar", tint = Color.White)
+                    IconButton(onClick = {
+                        if (isBackButtonEnabled) {
+                            isBackButtonEnabled = false
+                            navController.popBackStack()
+                        }
+                    }){
+                        Icon(
+                            Icons.Filled.ArrowBack,
+                            contentDescription = "Regresar",
+                            tint = Color.White
+                        )
                     }
                 },
                 actions = {

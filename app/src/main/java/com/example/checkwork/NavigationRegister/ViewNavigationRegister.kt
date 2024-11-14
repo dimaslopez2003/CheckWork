@@ -24,6 +24,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.checkwork.Navigation.BottomNavigationBar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.delay
 
 data class CheckEntry(
     val fecha: String,
@@ -44,6 +45,7 @@ fun CheckHistoryScreen(navController: NavHostController) {
     var departamento by remember { mutableStateOf("") }
     var checkEntries by remember { mutableStateOf(listOf<CheckEntry>()) }
     var isDarkModeEnabled by remember { mutableStateOf(false) }
+    var isBackButtonEnabled by remember { mutableStateOf(true) }
 
     // Recuperar el estado de modo oscuro de Firebase
     LaunchedEffect(Unit) {
@@ -71,6 +73,10 @@ fun CheckHistoryScreen(navController: NavHostController) {
             }
         }
     }
+    LaunchedEffect(Unit) {
+        delay(500)
+        isBackButtonEnabled = true
+    }
 
     // Guardar estado del modo oscuro en Firebase
     fun updateDarkModePreferenceInFirebase(isDarkMode: Boolean) {
@@ -85,8 +91,17 @@ fun CheckHistoryScreen(navController: NavHostController) {
                 title = { Text("Historial de Entradas y Salidas", color = Color.White) },
                 backgroundColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0),
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver", tint = Color.White)
+                    IconButton(onClick = {
+                        if (isBackButtonEnabled) {
+                            isBackButtonEnabled = false
+                            navController.popBackStack()
+                        }
+                    }){
+                        Icon(
+                            Icons.Filled.ArrowBack,
+                            contentDescription = "Regresar",
+                            tint = Color.White
+                        )
                     }
                 },
                 actions = {

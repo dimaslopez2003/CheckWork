@@ -22,7 +22,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.navigation.NavHostController
 import com.example.checkwork.R
 import com.example.checkwork.data.model.AuthManager
-import com.example.checkwork.forgot.ForgotPasswordScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,7 +60,7 @@ fun LoginScreen(navController: NavHostController) {
                     verticalArrangement = Arrangement.Center
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.logo),  // Assuming logo is stored in res/drawable/logo.png
+                        painter = painterResource(id = R.drawable.logo),
                         contentDescription = "Logo",
                         modifier = Modifier
                             .size(80.dp)

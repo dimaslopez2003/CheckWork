@@ -13,7 +13,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.checkwork.admin.updateDarkModePreferenceInFirebase
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.delay
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -21,20 +24,46 @@ import com.google.firebase.auth.FirebaseAuth
 fun ForgotPasswordScreen(navController: NavHostController) {
     var email by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
+    var isDarkModeEnabled by remember { mutableStateOf(false) }
+    var isBackButtonEnabled by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        delay(500)
+        isBackButtonEnabled = true
+    }
 
     Scaffold(
         topBar = {
-            androidx.compose.material.TopAppBar(
-                title = { },
-                backgroundColor = Color(0xFF0056E0),
+            TopAppBar(
+                modifier = Modifier.fillMaxWidth(),
+                title = { Text("Admin Panel", color = Color.White) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0)
+                ),
                 navigationIcon = {
-                    androidx.compose.material.IconButton(onClick = { navController.popBackStack() }) {
-                        androidx.compose.material.Icon(
-                            Icons.Default.ArrowBack,
+                    androidx.compose.material.IconButton(onClick = {
+                        if (isBackButtonEnabled) {
+                            isBackButtonEnabled = false
+                            navController.popBackStack()
+                        }
+                    }){
+                        Icon(
+                            Icons.Filled.ArrowBack,
                             contentDescription = "Regresar",
                             tint = Color.White
                         )
                     }
+                },
+                actions = {
+                    Switch(
+                        checked = isDarkModeEnabled,
+                        onCheckedChange = {
+                            isDarkModeEnabled = it
+                            updateDarkModePreferenceInFirebase(auth, db, it)
+                        },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF0056E0))
+                    )
                 }
             )
         },
