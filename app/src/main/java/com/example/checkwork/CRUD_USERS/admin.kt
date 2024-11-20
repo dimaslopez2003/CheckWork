@@ -8,6 +8,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -20,13 +22,15 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class AdminActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            AdminCrudScreen(navController = rememberNavController())
+            val navController = rememberNavController()
+            AdminCrudScreen(navController)
         }
     }
 }
@@ -40,13 +44,9 @@ fun AdminCrudScreen(navController: NavHostController) {
     var isDarkModeEnabled by remember { mutableStateOf(false) }
     var companyCode by remember { mutableStateOf("") }
     val empleados = remember { mutableStateListOf<Map<String, Any>>() }
+    var isBackButtonEnabled by remember { mutableStateOf(true) }
 
-    LaunchedEffect(companyCode) {
-        if (companyCode.isNotEmpty()) {
-            loadEmployees(db, companyCode, empleados)
-        }
-    }
-
+    // Cargar datos iniciales del administrador y empresa
     LaunchedEffect(Unit) {
         val userId = auth.currentUser?.uid
         if (userId != null) {
@@ -61,6 +61,24 @@ fun AdminCrudScreen(navController: NavHostController) {
         }
     }
 
+    // Cargar empleados cuando se tenga un código de empresa
+    LaunchedEffect(companyCode) {
+        if (companyCode.isNotEmpty()) {
+            loadEmployees(db, companyCode, empleados)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        delay(500)
+        isBackButtonEnabled = true
+    }
+
+    fun updateDarkModePreferenceInFirebase(isDarkMode: Boolean) {
+        auth.currentUser?.uid?.let { userId ->
+            db.collection("users").document(userId).update("darkModeEnabled", isDarkMode)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -70,16 +88,26 @@ fun AdminCrudScreen(navController: NavHostController) {
                     containerColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0)
                 ),
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Regresar", tint = Color.White)
+                    IconButton(onClick = {
+                        if (isBackButtonEnabled) {
+                            isBackButtonEnabled = false
+                            navController.popBackStack()
+                        }
+                    }) {
+                        Icon(
+                            Icons.Filled.ArrowBack,
+                            contentDescription = "Regresar",
+                            tint = Color.White
+                        )
                     }
                 },
                 actions = {
-                    Switch(
+                    // Interruptor de modo oscuro en la barra superior
+                    androidx.compose.material.Switch(
                         checked = isDarkModeEnabled,
                         onCheckedChange = {
                             isDarkModeEnabled = it
-                            updateDarkModePreferenceInFirebase(auth, db, it)
+                            updateDarkModePreferenceInFirebase(it) // Guardar el estado en Firebase
                         },
                         colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF0056E0))
                     )
@@ -100,7 +128,11 @@ fun AdminCrudScreen(navController: NavHostController) {
                     verticalArrangement = Arrangement.Top,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Empleados en la empresa", style = MaterialTheme.typography.headlineMedium, color = if (isDarkModeEnabled) Color.White else Color.Black)
+                    Text(
+                        text = "Empleados en la empresa",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = if (isDarkModeEnabled) Color.White else Color.Black
+                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -108,14 +140,18 @@ fun AdminCrudScreen(navController: NavHostController) {
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(8.dp)
                     ) {
-                        items(empleados.size) { index ->
+                        items(empleados) { empleado ->
                             EmployeeRow(
-                                empleado = empleados[index],
+                                empleado = empleado,
                                 isDarkModeEnabled = isDarkModeEnabled,
                                 db = db,
-                                onUpdate = { loadEmployees(db, companyCode, empleados) } // Refresca al editar o eliminar
+                                navController = navController,
+                                onUpdate = { loadEmployees(db, companyCode, empleados) }
                             )
-                            Divider(color = if (isDarkModeEnabled) Color.Gray else Color.LightGray, thickness = 1.dp)
+                            Divider(
+                                color = if (isDarkModeEnabled) Color.Gray else Color.LightGray,
+                                thickness = 1.dp
+                            )
                         }
                     }
                 }
@@ -125,14 +161,20 @@ fun AdminCrudScreen(navController: NavHostController) {
 }
 
 @Composable
-fun EmployeeRow(empleado: Map<String, Any>, isDarkModeEnabled: Boolean, db: FirebaseFirestore, onUpdate: () -> Unit) {
+fun EmployeeRow(
+    empleado: Map<String, Any>,
+    isDarkModeEnabled: Boolean,
+    db: FirebaseFirestore,
+    navController: NavHostController,
+    onUpdate: () -> Unit
+) {
     var showEditDialog by remember { mutableStateOf(false) }
     if (showEditDialog) {
         EditEmployeeDialog(
             empleado = empleado,
             onDismiss = {
                 showEditDialog = false
-                onUpdate() // Refresca después de editar
+                onUpdate()
             },
             db = db
         )
@@ -144,17 +186,29 @@ fun EmployeeRow(empleado: Map<String, Any>, isDarkModeEnabled: Boolean, db: Fire
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-            Text("ID: ${empleado["employeeId"]}", color = if (isDarkModeEnabled) Color.White else Color.Black)
-            Text("Nombre: ${empleado["username"]}", color = if (isDarkModeEnabled) Color.White else Color.Black)
-            Text("Departamento: ${empleado["departamento"] ?: "N/A"}", color = if (isDarkModeEnabled) Color.White else Color.Black)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = "ID: ${empleado["employeeId"]}",
+                color = if (isDarkModeEnabled) Color.White else Color.Black
+            )
+            Text(
+                text = "Nombre: ${empleado["username"]}",
+                color = if (isDarkModeEnabled) Color.White else Color.Black
+            )
+            Text(
+                text = "Departamento: ${empleado["departamento"] ?: "N/A"}",
+                color = if (isDarkModeEnabled) Color.White else Color.Black
+            )
         }
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.End
         ) {
+            IconButton(onClick = {
+                navController.navigate("viewGetRegisterScreen/${empleado["documentId"]}")
+            }) {
+                Icon(Icons.Filled.Visibility, contentDescription = "Ver registros", tint = if (isDarkModeEnabled) Color.White else Color.Black)
+            }
             IconButton(onClick = { showEditDialog = true }) {
                 Icon(Icons.Filled.Edit, contentDescription = "Editar", tint = if (isDarkModeEnabled) Color.White else Color.Black)
             }
@@ -232,7 +286,7 @@ fun removeCompanyCodeFromEmployee(db: FirebaseFirestore, documentId: String, onU
     db.collection("users").document(documentId).update("company_code", null)
         .addOnSuccessListener {
             Log.d("Firestore", "Código de la empresa eliminado del empleado")
-            onUpdate() // Refresca la lista después de eliminar el company_code
+            onUpdate()
         }
         .addOnFailureListener { e ->
             Log.e("Firestore", "Error al eliminar el código de la empresa", e)

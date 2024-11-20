@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.checkwork.CRUD_USERS.ViewEmployeeRecordsScreen
 import com.example.checkwork.Home.PantallaPrincipal
 import com.example.checkwork.JoinEmpresa.JoinEmpresaScreen
 import com.example.checkwork.Login.LoginScreen.LoginScreen
@@ -48,28 +49,56 @@ class MainActivity : ComponentActivity() {
             }
 
             NavHost(navController = navController, startDestination = "login") {
-                composable(route = "login") { LoginScreen(navController) }
-                composable(route = "register") { RegisterScreen(navController) }
+                composable(route = "login") {
+                    LoginScreen(navController = navController)
+                }
+                composable(route = "register") {
+                    RegisterScreen(navController)
+                }
                 composable(route = "home") {
                     PantallaPrincipal(navController)
                     DisableSystemBackButton()
                 }
-                composable(route = "form") { FormularioEmpresaScreen(navController) }
-                composable(route = "perfil") { ProfileScreen(navController) }
-                composable(route = "AddPhone") { AddNum(navController) }
-                composable(route = "support") { SoporteScreen(navController) }
-                composable(route = "calendar") { CalendarView(navController) }
-                composable(route = "navigate_register") { CheckHistoryScreen(navController) }
-                composable(route = "forgot_password") { ForgotPasswordScreen(navController) }
-                composable(route = "forgot_password_2") { ForgotPasswordMethodScreen(navController) }
-                composable(route = "forgot_password_3") {
-                    ForgotPasswordNewPasswordScreen(
-                        navController
-                    )
+                composable(route = "form") {
+                    FormularioEmpresaScreen(navController)
                 }
-                composable(route = "forgot_password_4") { ForgotPasswordUpdatedScreen(navController) }
-                composable(route = "crud") { AdminCrudScreen(navController) }
+                composable(route = "perfil") {
+                    ProfileScreen(navController)
+                }
+                composable(route = "AddPhone") {
+                    AddNum(navController)
+                }
+                composable(route = "support") {
+                    SoporteScreen(navController)
+                }
+                composable(route = "calendar") {
+                    CalendarView(navController)
+                }
+                composable(route = "navigate_register") {
+                    CheckHistoryScreen(navController)
+                }
+                composable(route = "forgot_password") {
+                    ForgotPasswordScreen(navController)
+                }
+                composable(route = "forgot_password_2") {
+                    ForgotPasswordMethodScreen(navController)
+                }
+                composable(route = "forgot_password_3") {
+                    ForgotPasswordNewPasswordScreen(navController)
+                }
+                composable(route = "forgot_password_4") {
+                    ForgotPasswordUpdatedScreen(navController)
+                }
+                composable(route = "crud") {
+                    AdminCrudScreen(navController)
+                }
                 composable(route = "join_company") { JoinEmpresaScreen(navController)
+                }
+                composable(route = "viewGetRegisterScreen/{employeeId}") { backStackEntry ->
+                    val employeeId = backStackEntry.arguments?.getString("employeeId")
+                    if (employeeId != null) {
+                        ViewEmployeeRecordsScreen(navController, employeeId)
+                    }
                 }
             }
         }

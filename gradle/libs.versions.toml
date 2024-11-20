@@ -1,6 +1,7 @@
 [versions]
 activityComposeVersion = "1.7.0"
 agp = "8.6.0"
+biometric = "1.2.0-alpha05"
 coilCompose = "2.0.0"
 coilComposeVersion = "2.2.2"
 firebaseBom = "33.5.1"
@@ -34,6 +35,7 @@ firebaseAnalytics = "22.1.2"
 
 [libraries]
 androidx-activity-compose-v170 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
+androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 androidx-navigation-compose-v260 = { module = "androidx.navigation:navigation-compose", version.ref = "navigationComposeVersion" }
