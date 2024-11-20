@@ -40,47 +40,43 @@ fun CheckHistoryScreen(navController: NavHostController) {
     val db = FirebaseFirestore.getInstance()
 
     var profileImageUrl by remember { mutableStateOf<String?>(null) }
-    var employeeId by remember { mutableStateOf("") }
+    var userId by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var departamento by remember { mutableStateOf("") }
     var checkEntries by remember { mutableStateOf(listOf<CheckEntry>()) }
     var isDarkModeEnabled by remember { mutableStateOf(false) }
     var isBackButtonEnabled by remember { mutableStateOf(true) }
 
-    // Recuperar el estado de modo oscuro de Firebase
+    // Recuperar el estado de usuario y registros
     LaunchedEffect(Unit) {
-        val userId = auth.currentUser?.uid
-        if (userId != null) {
+        userId = auth.currentUser?.uid.orEmpty()
+        if (userId.isNotEmpty()) {
             db.collection("users").document(userId).get().addOnSuccessListener { document ->
                 profileImageUrl = document.getString("profileImageUrl")
-                username = document.getString("username") ?: ""
-                employeeId = document.getString("employeeId") ?: ""
-                departamento = document.getString("departamento") ?: ""
-                isDarkModeEnabled = document.getBoolean("darkModeEnabled") ?: false  // Obtener el estado del modo oscuro
+                username = document.getString("username") ?: "Usuario"
+                departamento = document.getString("departamento") ?: "Sin Departamento"
+                isDarkModeEnabled = document.getBoolean("darkModeEnabled") ?: false
 
-                if (employeeId.isNotEmpty()) {
-                    db.collection("checks").whereEqualTo("employeeId", employeeId).get()
-                        .addOnSuccessListener { querySnapshot ->
-                            val entries = querySnapshot.documents.mapNotNull { doc ->
-                                val fecha = doc.getString("fecha") ?: ""
-                                val hora = doc.getString("hora") ?: ""
-                                val tipo = doc.getString("tipo") ?: ""
-                                CheckEntry(fecha = fecha, hora = hora, tipo = tipo)
-                            }
-                            checkEntries = entries
+                db.collection("checks")
+                    .whereEqualTo("employeeId", userId) // Buscar registros del usuario actual
+                    .get()
+                    .addOnSuccessListener { querySnapshot ->
+                        val entries = querySnapshot.documents.mapNotNull { doc ->
+                            val fecha = doc.getString("fecha") ?: "Sin fecha"
+                            val hora = doc.getString("hora") ?: "Sin hora"
+                            val tipo = doc.getString("tipo") ?: "Sin tipo"
+                            val comentarios = doc.getString("comentarios") ?: ""
+                            CheckEntry(fecha, hora, tipo, comentarios)
                         }
-                }
+                        checkEntries = entries.sortedByDescending { it.fecha + it.hora } // Ordenar por fecha y hora
+                    }
             }
         }
-    }
-    LaunchedEffect(Unit) {
-        delay(500)
-        isBackButtonEnabled = true
     }
 
     // Guardar estado del modo oscuro en Firebase
     fun updateDarkModePreferenceInFirebase(isDarkMode: Boolean) {
-        auth.currentUser?.uid?.let { userId ->
+        if (userId.isNotEmpty()) {
             db.collection("users").document(userId).update("darkModeEnabled", isDarkMode)
         }
     }
@@ -96,7 +92,7 @@ fun CheckHistoryScreen(navController: NavHostController) {
                             isBackButtonEnabled = false
                             navController.popBackStack()
                         }
-                    }){
+                    }) {
                         Icon(
                             Icons.Filled.ArrowBack,
                             contentDescription = "Regresar",
@@ -105,12 +101,11 @@ fun CheckHistoryScreen(navController: NavHostController) {
                     }
                 },
                 actions = {
-                    // Interruptor de modo oscuro en la barra superior
                     Switch(
                         checked = isDarkModeEnabled,
                         onCheckedChange = {
                             isDarkModeEnabled = it
-                            updateDarkModePreferenceInFirebase(it) // Guardar el estado en Firebase
+                            updateDarkModePreferenceInFirebase(it)
                         },
                         colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF0056E0))
                     )
@@ -124,94 +119,9 @@ fun CheckHistoryScreen(navController: NavHostController) {
                     .background(if (isDarkModeEnabled) Color(0xFF121212) else Color(0xFFE0F7FA))
                     .padding(16.dp)
             ) {
-                // Card del perfil
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    elevation = 4.dp,
-                    backgroundColor = if (isDarkModeEnabled) Color(0xFF303030) else Color.White
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (profileImageUrl != null) {
-                            Image(
-                                painter = rememberAsyncImagePainter(profileImageUrl),
-                                contentDescription = "Foto de Perfil",
-                                modifier = Modifier
-                                    .size(80.dp)
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Filled.AccountCircle,
-                                contentDescription = "Imagen de Perfil",
-                                modifier = Modifier.size(80.dp),
-                                tint = if (isDarkModeEnabled) Color.Gray else Color.Black
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column {
-                            Text(
-                                text = departamento,
-                                fontSize = 16.sp,
-                                color = if (isDarkModeEnabled) Color.LightGray else Color.Gray,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                text = username,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isDarkModeEnabled) Color.White else Color.Black
-                            )
-                        }
-                    }
-                }
-
+                ProfileCard(profileImageUrl, username, departamento, isDarkModeEnabled)
                 Spacer(modifier = Modifier.height(16.dp))
-
-                // Card para la lista de registros
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    backgroundColor = if (isDarkModeEnabled) Color(0xFF303030) else Color.White,
-                    elevation = 4.dp
-                ) {
-                    Column(modifier = Modifier.padding(8.dp)) {
-                        // Encabezado de la tabla
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            TableHeader("Fecha", isDarkModeEnabled)
-                            TableHeader("Hora", isDarkModeEnabled)
-                            TableHeader("Tipo", isDarkModeEnabled)
-                        }
-                        Divider(color = if (isDarkModeEnabled) Color.Gray else Color.LightGray)
-
-                        checkEntries.forEach { entry ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                TableCell(entry.fecha, isDarkModeEnabled)
-                                TableCell(entry.hora, isDarkModeEnabled)
-                                TableCell(entry.tipo, isDarkModeEnabled)
-                            }
-                            Divider(color = if (isDarkModeEnabled) Color.Gray else Color.LightGray)
-                        }
-                    }
-                }
+                RecordsCard(checkEntries, isDarkModeEnabled)
             }
         },
         bottomBar = {
@@ -221,6 +131,96 @@ fun CheckHistoryScreen(navController: NavHostController) {
             )
         }
     )
+}
+
+@Composable
+fun ProfileCard(profileImageUrl: String?, username: String, departamento: String, isDarkModeEnabled: Boolean) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        shape = RoundedCornerShape(8.dp),
+        elevation = 4.dp,
+        backgroundColor = if (isDarkModeEnabled) Color(0xFF303030) else Color.White
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (profileImageUrl != null) {
+                Image(
+                    painter = rememberAsyncImagePainter(profileImageUrl),
+                    contentDescription = "Foto de Perfil",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Filled.AccountCircle,
+                    contentDescription = "Imagen de Perfil",
+                    modifier = Modifier.size(80.dp),
+                    tint = if (isDarkModeEnabled) Color.Gray else Color.Black
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(
+                    text = departamento,
+                    fontSize = 16.sp,
+                    color = if (isDarkModeEnabled) Color.LightGray else Color.Gray,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = username,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isDarkModeEnabled) Color.White else Color.Black
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun RecordsCard(checkEntries: List<CheckEntry>, isDarkModeEnabled: Boolean) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        shape = RoundedCornerShape(8.dp),
+        backgroundColor = if (isDarkModeEnabled) Color(0xFF303030) else Color.White,
+        elevation = 4.dp
+    ) {
+        Column(modifier = Modifier.padding(8.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                TableHeader("Fecha", isDarkModeEnabled)
+                TableHeader("Hora", isDarkModeEnabled)
+                TableHeader("Tipo", isDarkModeEnabled)
+            }
+            Divider(color = if (isDarkModeEnabled) Color.Gray else Color.LightGray)
+
+            checkEntries.forEach { entry ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    TableCell(entry.fecha, isDarkModeEnabled)
+                    TableCell(entry.hora, isDarkModeEnabled)
+                    TableCell(entry.tipo, isDarkModeEnabled)
+                }
+                Divider(color = if (isDarkModeEnabled) Color.Gray else Color.LightGray)
+            }
+        }
+    }
 }
 
 @Composable
@@ -234,10 +234,9 @@ fun TableHeader(text: String, isDarkModeEnabled: Boolean) {
 }
 
 @Composable
-fun TableCell(text: String, isDarkModeEnabled: Boolean, backgroundColor: Color = Color.Transparent, textColor: Color = if (isDarkModeEnabled) Color.LightGray else Color.Black) {
+fun TableCell(text: String, isDarkModeEnabled: Boolean, textColor: Color = if (isDarkModeEnabled) Color.LightGray else Color.Black) {
     Box(
         modifier = Modifier
-            .background(backgroundColor)
             .padding(horizontal = 1.dp, vertical = 12.dp)
             .fillMaxWidth(0.3f)
     ) {
