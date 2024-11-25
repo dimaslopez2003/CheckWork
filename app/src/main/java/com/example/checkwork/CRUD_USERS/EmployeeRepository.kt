@@ -1,6 +1,9 @@
 package com.example.checkwork.CRUD_USERS
 
+import com.example.checkwork.FunctionTime.db
+import com.example.checkwork.NavigationRegister.CheckEntry
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.perf.FirebasePerformance
 import kotlinx.coroutines.tasks.await
 
 data class EmployeeRecord(
@@ -47,3 +50,31 @@ class EmployeeRepository {
         }
     }
 }
+
+suspend fun fetchCheckEntries(employeeId: String): List<CheckEntry> {
+    val trace = FirebasePerformance.getInstance().newTrace("fetch_check_entries")
+    trace.start()
+
+    return try {
+        val startTime = System.currentTimeMillis()
+        val records = db.collection("checks")
+            .whereEqualTo("employeeId", employeeId)
+            .get()
+            .await()
+            .documents.mapNotNull { doc ->
+                val fecha = doc.getString("fecha") ?: "N/A"
+                val hora = doc.getString("hora") ?: "N/A"
+                val tipo = doc.getString("tipo") ?: "N/A"
+                CheckEntry(fecha, hora, tipo)
+            }
+        trace.putMetric("fetch_time_ms", System.currentTimeMillis() - startTime)
+        trace.incrementMetric("records_fetched", records.size.toLong())
+        records
+    } catch (e: Exception) {
+        trace.putMetric("fetch_error", 1)
+        emptyList()
+    } finally {
+        trace.stop()
+    }
+}
+

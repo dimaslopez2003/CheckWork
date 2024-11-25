@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.google.gms.google.services)
-
+    id("com.google.firebase.firebase-perf") version "1.4.2" apply false
 }
 
 android {
@@ -124,6 +124,15 @@ dependencies {
 
     //PERMISOS DE HUELLA
     implementation (libs.androidx.biometric)
+
+    //MONITORING
+        implementation (platform("com.google.firebase:firebase-bom:32.1.0"))
+        implementation ("com.google.firebase:firebase-perf-ktx")
+        implementation ("com.google.firebase:firebase-analytics-ktx")
+
+    //animaciones
+    implementation ("com.airbnb.android:lottie-compose:6.1.0")
+
 
 }
 

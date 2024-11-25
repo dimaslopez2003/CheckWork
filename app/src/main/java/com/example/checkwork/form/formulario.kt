@@ -138,8 +138,8 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
             Surface(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(if (isDarkModeEnabled) Color(0xFF121212) else Color(0xFF66ABE3)),
-                color = if (isDarkModeEnabled) Color(0xFF121212) else Color(0xFF66ABE3)
+                    .background(if (isDarkModeEnabled) Color(0xFF121212) else Color(0xFFE0F7FA)),
+                color = if (isDarkModeEnabled) Color(0xFF121212) else Color(0xFFE0F7FA)
             ) {
                 Column(
                     modifier = Modifier
@@ -150,7 +150,7 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                 ) {
                     Card(
                         colors = CardDefaults.cardColors(
-                            containerColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFFE0F7FA),
+                            containerColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0),
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -167,7 +167,7 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                                 modifier = Modifier
                                     .size(60.dp)
                                     .padding(8.dp),
-                                tint = if (isDarkModeEnabled) Color.White else Color.Black
+                                tint = if (isDarkModeEnabled) Color.White else Color.White
                             )
 
                             Spacer(modifier = Modifier.height(8.dp))
@@ -320,8 +320,8 @@ fun FormularioEmpresaScreen(navController: NavHostController) {
                                     saveCompanyData(db, empresaData, auth.currentUser!!.uid)
                                 },
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isDarkModeEnabled) Color(0xFF000000) else Color(0xFF0056E0),
-                                    contentColor = Color.White
+                                    containerColor = if (isDarkModeEnabled) Color(0xFF000000) else Color(0xFFE0F7FA),
+                                    contentColor = if (isDarkModeEnabled) Color(0xFFFFFFFF) else Color.Black
                                 ),
                                 modifier = Modifier.fillMaxWidth()
                             ) {

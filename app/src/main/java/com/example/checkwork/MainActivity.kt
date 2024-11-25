@@ -16,7 +16,7 @@ import androidx.navigation.compose.composable
 import com.example.checkwork.CRUD_USERS.ViewEmployeeRecordsScreen
 import com.example.checkwork.Home.PantallaPrincipal
 import com.example.checkwork.JoinEmpresa.JoinEmpresaScreen
-import com.example.checkwork.Login.LoginScreen.LoginScreen
+import com.example.checkwork.Login.LoginScreen
 import com.example.checkwork.NavigationRegister.CheckHistoryScreen
 import com.example.checkwork.Profile.AddNum
 import com.example.checkwork.Profile.ProfileScreen
@@ -24,12 +24,14 @@ import com.example.checkwork.admin.AdminCrudScreen
 import com.example.checkwork.forgot.*
 import com.example.checkwork.form.FormularioEmpresaScreen
 import com.example.checkwork.supportview.SoporteScreen
+import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        FirebaseApp.initializeApp(this)
 
         setContent {
             val auth = FirebaseAuth.getInstance()
@@ -68,9 +70,10 @@ class MainActivity : ComponentActivity() {
                 composable(route = "AddPhone") {
                     AddNum(navController)
                 }
-                composable(route = "support") {
+                composable("support") {
                     SoporteScreen(navController)
                 }
+
                 composable(route = "calendar") {
                     CalendarView(navController)
                 }

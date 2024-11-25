@@ -34,12 +34,12 @@ fun ViewEmployeeRecordsScreen(
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
 
-    // Iniciar la carga de datos
+    // Iniciar la carga de datos usando fetchCheckEntries
     LaunchedEffect(employeeId) {
         try {
             isLoading = true
             println("Cargando registros para employeeId: $employeeId")
-            viewModel.fetchEmployeeRecords(employeeId)
+            viewModel.fetchEmployeeRecords(employeeId) // Se asegura de cargar registros con la lógica correcta
             viewModel.fetchEmployeeName(employeeId)
         } catch (e: Exception) {
             isError = true
@@ -55,6 +55,7 @@ fun ViewEmployeeRecordsScreen(
         isBackButtonEnabled = true
     }
 
+    // Actualizar preferencia de modo oscuro en Firebase
     fun updateDarkModePreferenceInFirebase(isDarkMode: Boolean) {
         auth.currentUser?.uid?.let { userId ->
             db.collection("users").document(userId).update("darkModeEnabled", isDarkMode)

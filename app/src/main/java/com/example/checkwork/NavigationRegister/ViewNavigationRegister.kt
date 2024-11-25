@@ -16,15 +16,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.example.checkwork.Navigation.BottomNavigationBar
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.logEvent
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.delay
+
 
 data class CheckEntry(
     val fecha: String,
@@ -38,6 +41,7 @@ data class CheckEntry(
 fun CheckHistoryScreen(navController: NavHostController) {
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
+    val firebaseAnalytics = FirebaseAnalytics.getInstance(LocalContext.current) // Mover aquí
 
     var profileImageUrl by remember { mutableStateOf<String?>(null) }
     var userId by remember { mutableStateOf("") }
@@ -47,10 +51,14 @@ fun CheckHistoryScreen(navController: NavHostController) {
     var isDarkModeEnabled by remember { mutableStateOf(false) }
     var isBackButtonEnabled by remember { mutableStateOf(true) }
 
-    // Recuperar el estado de usuario y registros
     LaunchedEffect(Unit) {
         userId = auth.currentUser?.uid.orEmpty()
         if (userId.isNotEmpty()) {
+            // Registrar el evento al iniciar la consulta
+            firebaseAnalytics.logEvent("fetch_check_entries") {
+                param("user_id", userId)
+            }
+
             db.collection("users").document(userId).get().addOnSuccessListener { document ->
                 profileImageUrl = document.getString("profileImageUrl")
                 username = document.getString("username") ?: "Usuario"
@@ -58,7 +66,7 @@ fun CheckHistoryScreen(navController: NavHostController) {
                 isDarkModeEnabled = document.getBoolean("darkModeEnabled") ?: false
 
                 db.collection("checks")
-                    .whereEqualTo("employeeId", userId) // Buscar registros del usuario actual
+                    .whereEqualTo("employeeId", userId)
                     .get()
                     .addOnSuccessListener { querySnapshot ->
                         val entries = querySnapshot.documents.mapNotNull { doc ->
@@ -68,7 +76,13 @@ fun CheckHistoryScreen(navController: NavHostController) {
                             val comentarios = doc.getString("comentarios") ?: ""
                             CheckEntry(fecha, hora, tipo, comentarios)
                         }
-                        checkEntries = entries.sortedByDescending { it.fecha + it.hora } // Ordenar por fecha y hora
+                        checkEntries = entries.sortedByDescending { it.fecha + it.hora }
+
+                        // Registrar cuántos registros se obtuvieron
+                        firebaseAnalytics.logEvent("check_entries_fetched") {
+                            param("entry_count", entries.size.toLong())
+                            param("user_id", userId)
+                        }
                     }
             }
         }
