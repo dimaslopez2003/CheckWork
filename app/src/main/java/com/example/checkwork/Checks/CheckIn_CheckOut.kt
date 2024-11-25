@@ -1,53 +1,58 @@
 package com.example.checkwork.Checks
 
-import android.util.Log
+import com.example.checkwork.FunctionTime.getCurrentDate
+import com.example.checkwork.FunctionTime.getCurrentTime
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.tasks.await
-import java.text.SimpleDateFormat
-import java.util.*
 
-fun registrarEntradaSalida(tipo: String, comentarios: String = "", onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+fun registrarEntradaSalida(
+    tipo: String,
+    onSuccess: () -> Unit,
+    onFailure: (Exception) -> Unit
+) {
     val db = FirebaseFirestore.getInstance()
     val auth = FirebaseAuth.getInstance()
+
     val userId = auth.currentUser?.uid
 
     if (userId != null) {
-        // Obtener detalles del usuario
+        // Obtener el documento correspondiente al usuario autenticado
         db.collection("users").document(userId).get()
             .addOnSuccessListener { document ->
-                val employeeId = document.getString("employeeId") ?: "Desconocido"
+                val documentId = document.id // ID del documento en la colección "users"
                 val username = document.getString("username") ?: "Desconocido"
 
-                // Crear datos del check-in/check-out
-                val fechaHoraActual = Date()
-                val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
-                val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+                val currentTimeMillis = System.currentTimeMillis()
+                val uniqueId = "$documentId-$currentTimeMillis" // ID único combinado
 
-                val checkData = hashMapOf(
-                    "employeeId" to employeeId,
+                // Datos que se guardarán en "checks"
+                val data = mapOf(
+                    "employeeId" to documentId, // Aquí se guarda el ID del documento de "users"
                     "username" to username,
-                    "fecha" to dateFormat.format(fechaHoraActual),
-                    "hora" to timeFormat.format(fechaHoraActual),
                     "tipo" to tipo,
-                    "comentarios" to comentarios
+                    "fecha" to getCurrentDate(),
+                    "hora" to getCurrentTime(),
+                    "comentarios" to "",
                 )
-                db.collection("checks").add(checkData)
+
+                // Crear un nuevo documento en la colección "checks"
+                db.collection("checks").document(uniqueId)
+                    .set(data)
                     .addOnSuccessListener {
-                        Log.d("CheckIn_CheckOut", "Registro de $tipo exitoso para $username.")
+                        println("Registro $tipo exitoso para employeeId $documentId con ID único $uniqueId")
                         onSuccess()
                     }
-                    .addOnFailureListener { exception ->
-                        Log.e("CheckIn_CheckOut", "Error al registrar $tipo", exception)
-                        onFailure(exception)
+                    .addOnFailureListener { e ->
+                        println("Error al registrar $tipo: ${e.message}")
+                        onFailure(e)
                     }
             }
-            .addOnFailureListener { exception ->
-                Log.e("CheckIn_CheckOut", "Error al obtener detalles del usuario", exception)
-                onFailure(exception)
+            .addOnFailureListener { e ->
+                println("Error al obtener datos del usuario: ${e.message}")
+                onFailure(e)
             }
     } else {
-        Log.e("CheckIn_CheckOut", "Usuario no autenticado")
+        println("Usuario no autenticado")
         onFailure(Exception("Usuario no autenticado"))
     }
 }

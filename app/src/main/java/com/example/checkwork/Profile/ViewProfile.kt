@@ -241,17 +241,6 @@ fun ProfileScreen(navController: NavHostController) {
                         label = "ID DE EMPLEADO",
                         value = employeeId, isDarkModeEnabled
                     )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                    InfoItem(
-                        icon = Icons.Filled.Fingerprint,
-                        label = "INICIO DE SESIÓN CON HUELLA",
-                        value = "",
-                        switchValue = fingerprintEnabled,
-                        isDarkModeEnabled = isDarkModeEnabled
-                    ) {
-                        fingerprintEnabled = it
-                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     if (role == "Administrador") {
                         InfoItem(

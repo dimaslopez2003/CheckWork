@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.rememberImagePainter
 import com.example.checkwork.Checks.registrarEntradaSalida
+import com.example.checkwork.FunctionTime.getCurrentDate
 import com.example.checkwork.FunctionTime.getCurrentTime
 import com.example.checkwork.Navigation.BottomNavigationBar
 import com.example.checkwork.R
@@ -325,8 +326,10 @@ fun ContentSection(
     context: android.content.Context,
     hasCheckedIn: Boolean,
     hasCheckedOut: Boolean,
-    onCheckUpdate: (Pair<Boolean, Boolean>) -> Unit)
-{
+    onCheckUpdate: (Pair<Boolean, Boolean>) -> Unit
+) {
+    var entryTime by remember { mutableStateOf<Long?>(null) } // Hora de entrada en milisegundos
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -339,8 +342,7 @@ fun ContentSection(
                 .fillMaxWidth()
                 .padding(16.dp),
             shape = RoundedCornerShape(8.dp),
-            backgroundColor = Color(0xFFF0F0F0),
-
+            backgroundColor = Color(0xFFF0F0F0)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -416,6 +418,9 @@ fun ContentSection(
                     if (hasCheckedIn) {
                         showAlert(context, "Ya se ha registrado la entrada.")
                     } else {
+                        val currentTimeMillis = System.currentTimeMillis()
+                        entryTime = currentTimeMillis // Registrar hora de entrada
+
                         registrarEntradaSalida(
                             tipo = "entrada",
                             onSuccess = {
@@ -443,18 +448,28 @@ fun ContentSection(
                     } else if (hasCheckedOut) {
                         showAlert(context, "Ya se ha registrado la salida.")
                     } else {
-                        registrarEntradaSalida(
-                            tipo = "salida",
-                            onSuccess = {
-                                onCheckUpdate(Pair(hasCheckedIn, true))
-                                Toast.makeText(context, "Check Out exitoso", Toast.LENGTH_SHORT)
-                                    .show()
-                            },
-                            onFailure = { e ->
-                                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT)
-                                    .show()
-                            }
-                        )
+                        val currentTimeMillis = System.currentTimeMillis()
+
+                        // Validar si la salida ocurre dentro de las 8 horas
+                        if (entryTime != null && (currentTimeMillis - entryTime!!) <= 8 * 60 * 60 * 1000) {
+                            registrarEntradaSalida(
+                                tipo = "salida",
+                                onSuccess = {
+                                    onCheckUpdate(Pair(hasCheckedIn, true))
+                                    Toast.makeText(context, "Check Out exitoso", Toast.LENGTH_SHORT)
+                                        .show()
+                                },
+                                onFailure = { e ->
+                                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT)
+                                        .show()
+                                }
+                            )
+                        } else {
+                            showAlert(
+                                context,
+                                "La salida debe registrarse dentro de una jornada de 8 horas desde la entrada."
+                            )
+                        }
                     }
                 }
             )
