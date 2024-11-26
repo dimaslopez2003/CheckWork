@@ -20,7 +20,7 @@ import com.example.checkwork.Login.LoginScreen
 import com.example.checkwork.NavigationRegister.CheckHistoryScreen
 import com.example.checkwork.Profile.AddNum
 import com.example.checkwork.Profile.ProfileScreen
-import com.example.checkwork.admin.AdminCrudScreen
+import com.example.checkwork.CRUD_USERS.FunctionsCrud.AdminCrudScreen
 import com.example.checkwork.forgot.*
 import com.example.checkwork.form.FormularioEmpresaScreen
 import com.example.checkwork.supportview.SoporteScreen

@@ -1,4 +1,4 @@
-package com.example.checkwork.admin
+package com.example.checkwork.CRUD_USERS.FunctionsCrud
 
 import android.annotation.SuppressLint
 import android.os.Bundle
@@ -20,10 +20,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.checkwork.Navigation.BottomNavigationBar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 class AdminActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -114,7 +114,13 @@ fun AdminCrudScreen(navController: NavHostController) {
                 }
             )
         },
-        content = {
+        bottomBar = {
+            BottomNavigationBar(
+                navController = navController,
+                isDarkModeEnabled = isDarkModeEnabled
+            )
+        },
+        content = { innerPadding ->
             Surface(
                 modifier = Modifier
                     .fillMaxSize()
@@ -124,6 +130,7 @@ fun AdminCrudScreen(navController: NavHostController) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
+                        .padding(innerPadding)
                         .padding(16.dp),
                     verticalArrangement = Arrangement.Top,
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -265,54 +272,4 @@ fun EditEmployeeDialog(empleado: Map<String, Any>, onDismiss: () -> Unit, db: Fi
             }
         }
     )
-}
-
-fun updateEmployeeInFirebase(db: FirebaseFirestore, documentId: String, username: String, employeeId: String, departamento: String) {
-    val updatedData = mapOf(
-        "username" to username,
-        "employeeId" to employeeId,
-        "departamento" to departamento
-    )
-    db.collection("users").document(documentId).update(updatedData)
-        .addOnSuccessListener {
-            Log.d("Firestore", "Empleado actualizado exitosamente")
-        }
-        .addOnFailureListener { e ->
-            Log.e("Firestore", "Error al actualizar el empleado", e)
-        }
-}
-
-fun removeCompanyCodeFromEmployee(db: FirebaseFirestore, documentId: String, onUpdate: () -> Unit) {
-    db.collection("users").document(documentId).update("company_code", null)
-        .addOnSuccessListener {
-            Log.d("Firestore", "Código de la empresa eliminado del empleado")
-            onUpdate()
-        }
-        .addOnFailureListener { e ->
-            Log.e("Firestore", "Error al eliminar el código de la empresa", e)
-        }
-}
-
-fun loadEmployees(db: FirebaseFirestore, companyCode: String, empleados: MutableList<Map<String, Any>>) {
-    db.collection("users")
-        .whereEqualTo("company_code", companyCode)
-        .whereEqualTo("rol", "empleado")
-        .get()
-        .addOnSuccessListener { documents ->
-            empleados.clear()
-            for (document in documents) {
-                val employeeData = document.data.toMutableMap()
-                employeeData["documentId"] = document.id
-                empleados.add(employeeData)
-            }
-        }
-        .addOnFailureListener { e ->
-            Log.e("Firestore", "Error al cargar los empleados", e)
-        }
-}
-
-fun updateDarkModePreferenceInFirebase(auth: FirebaseAuth, db: FirebaseFirestore, isDarkMode: Boolean) {
-    auth.currentUser?.uid?.let { userId ->
-        db.collection("users").document(userId).update("darkModeEnabled", isDarkMode)
-    }
 }
