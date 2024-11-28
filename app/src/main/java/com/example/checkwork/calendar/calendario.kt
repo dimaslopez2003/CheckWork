@@ -1,3 +1,5 @@
+package com.example.checkwork.calendar
+
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -6,9 +8,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,7 +26,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.delay
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun CalendarView(navController: NavHostController) {
@@ -201,28 +200,3 @@ fun CalendarView(navController: NavHostController) {
     )
 }
 
-fun getDaysInMonth(month: Int, year: Int): List<Int> {
-    val calendar = Calendar.getInstance()
-    calendar.set(Calendar.MONTH, month)
-    calendar.set(Calendar.YEAR, year)
-    val daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
-    return (1..daysInMonth).toList()
-}
-
-fun getMonthName(month: Int): String {
-    return when (month) {
-        0 -> "Enero"
-        1 -> "Febrero"
-        2 -> "Marzo"
-        3 -> "Abril"
-        4 -> "Mayo"
-        5 -> "Junio"
-        6 -> "Julio"
-        7 -> "Agosto"
-        8 -> "Septiembre"
-        9 -> "Octubre"
-        10 -> "Noviembre"
-        11 -> "Diciembre"
-        else -> ""
-    }
-}
