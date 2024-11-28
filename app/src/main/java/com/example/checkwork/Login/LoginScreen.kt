@@ -159,7 +159,7 @@ fun LoginScreen(navController: NavHostController) {
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        TextButton(onClick = { navController.navigate("forgot_password") }) {
+                        TextButton(onClick = { navController.navigate("reset_password") }) {
                             Text(
                                 text = "¿Olvidaste tu contraseña\uD83E\uDD14?",
                                 color = Color(0xFF000000),
@@ -178,16 +178,16 @@ fun LoginScreen(navController: NavHostController) {
                                 passwordError = password.isEmpty()
 
                                 if (!emailError && !passwordError) {
-                                    isLoading = true
                                     scope.launch {
-                                        delay(3000) // Retraso de 3 segundos para mostrar la animación
+                                        isLoading = true // Mostrar animación de carga al iniciar la operación
                                         authManager.signInWithEmailAndPassword(email, password) { success, error ->
-                                            isLoading = false
+                                            isLoading = false // Ocultar animación de carga al finalizar la operación
                                             if (success) {
                                                 navController.navigate("home") {
                                                     popUpTo("login") { inclusive = true }
                                                 }
                                             } else {
+                                                // Mostrar diálogo de error sin pasar por la animación
                                                 errorMessage = error ?: "Correo o contraseña incorrectos"
                                                 showDialog = true
                                             }
@@ -205,6 +205,7 @@ fun LoginScreen(navController: NavHostController) {
                         ) {
                             Text(text = "Iniciar sesión")
                         }
+
 
                         Spacer(modifier = Modifier.height(16.dp))
 

@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.rememberImagePainter
 import com.example.checkwork.Checks.registrarEntradaSalida
-import com.example.checkwork.FunctionTime.getCurrentDate
 import com.example.checkwork.FunctionTime.getCurrentTime
 import com.example.checkwork.Navigation.BottomNavigationBar
 import com.example.checkwork.R
@@ -152,7 +151,7 @@ fun PantallaPrincipal(navController: NavHostController) {
             }
         },
         content = {
-            ContentSection(username, currentTime, nombreEmpresa, context, hasCheckedIn, hasCheckedOut) {
+            ContentSection(username, currentTime, nombreEmpresa, context, hasCheckedIn, hasCheckedOut, isDarkModeEnabled) {
                 hasCheckedIn = it.first
                 hasCheckedOut = it.second
             }
@@ -326,6 +325,7 @@ fun ContentSection(
     context: android.content.Context,
     hasCheckedIn: Boolean,
     hasCheckedOut: Boolean,
+    isDarkModeEnabled: Boolean,
     onCheckUpdate: (Pair<Boolean, Boolean>) -> Unit
 ) {
     var entryTime by remember { mutableStateOf<Long?>(null) } // Hora de entrada en milisegundos
@@ -333,7 +333,7 @@ fun ContentSection(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFE0F7FA)),
+            .background(if (isDarkModeEnabled) Color(0xFF121212) else Color(0xFFE0F7FA)),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {

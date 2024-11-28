@@ -6,6 +6,9 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,8 +23,10 @@ import com.example.checkwork.Navigation.BottomNavigationBar
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.delay
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun CalendarView(navController: NavHostController) {
@@ -35,6 +40,7 @@ fun CalendarView(navController: NavHostController) {
     val days = getDaysInMonth(month, year)
     val currentDay = calendar.get(Calendar.DAY_OF_MONTH)
     var isDarkModeEnabled by remember { mutableStateOf(false) }
+    var isBackButtonEnabled by remember { mutableStateOf(true) }
 
     // Recuperar el estado de modo oscuro de Firebase
     LaunchedEffect(Unit) {
@@ -44,6 +50,10 @@ fun CalendarView(navController: NavHostController) {
                     isDarkModeEnabled = document.getBoolean("darkModeEnabled") ?: false
                 }
         }
+    }
+    LaunchedEffect(Unit) {
+        delay(500) // Espera medio segundo antes de habilitar el botón de nuevo
+        isBackButtonEnabled = true
     }
 
     // Guardar estado del modo oscuro en Firebase
@@ -55,7 +65,6 @@ fun CalendarView(navController: NavHostController) {
 
     var selectedDay by remember { mutableStateOf(currentDay) }
 
-    // Cambiar color de la barra de estado
     systemUiController.setSystemBarsColor(
         color = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0)
     )
@@ -63,16 +72,30 @@ fun CalendarView(navController: NavHostController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Calendario", color = Color.White) },
-                backgroundColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0),
+                modifier = Modifier.fillMaxWidth(),
+                title = {
+                    androidx.compose.material3.Text(
+                        "Registra tu empresa",
+                        color = Color.White
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Regresar", tint = Color.White)
+                    androidx.compose.material3.IconButton(onClick =
+                    {
+                        if (isBackButtonEnabled) {
+                            isBackButtonEnabled = false
+                            navController.popBackStack()
+                        }
+                    }) {
+                        androidx.compose.material3.Icon(
+                            Icons.Filled.ArrowBack,
+                            contentDescription = "Regresar",
+                            tint = Color.White
+                        )
                     }
                 },
                 actions = {
-                    // Interruptor de modo oscuro en la barra superior
-                    Switch(
+                    androidx.compose.material3.Switch(
                         checked = isDarkModeEnabled,
                         onCheckedChange = {
                             isDarkModeEnabled = it
@@ -80,7 +103,7 @@ fun CalendarView(navController: NavHostController) {
                         },
                         colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF0056E0))
                     )
-                }
+                },
             )
         },
         bottomBar = {

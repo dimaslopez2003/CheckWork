@@ -41,10 +41,16 @@ fun RegisterScreen(navController: NavHostController) {
     var passwordVisible by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
+    var isBackButtonEnabled by remember { mutableStateOf(true) }
 
     val scaffoldState = rememberScaffoldState()
     val coroutineScope = rememberCoroutineScope()
     val loadingAnimation by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.load))
+
+    LaunchedEffect(Unit) {
+        delay(500) // Habilita el botón de nuevo tras medio segundo
+        isBackButtonEnabled = true
+    }
 
     if (isLoading) {
         // Pantalla de animación de carga
@@ -68,8 +74,15 @@ fun RegisterScreen(navController: NavHostController) {
                     title = { Text("Registro", color = Color.White) },
                     backgroundColor = Color(0xFF0056E0),
                     navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(Icons.Filled.ArrowBack, contentDescription = "Regresar", tint = Color.White)
+                        IconButton(
+                            onClick = {
+                                if (isBackButtonEnabled) {
+                                    isBackButtonEnabled = false
+                                    navController.popBackStack() // Volver atrás
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Filled.ArrowBack, contentDescription = "Volver", tint = Color.White)
                         }
                     }
                 )
@@ -204,7 +217,7 @@ fun RegisterScreen(navController: NavHostController) {
                                                             .addOnSuccessListener {
                                                                 isLoading = false
                                                                 navController.navigate("login") {
-                                                                    popUpTo("register") { inclusive = true } // Navegar eliminando la pantalla actual del back stack
+                                                                    popUpTo("register") { inclusive = true }
                                                                 }
                                                             }
                                                             .addOnFailureListener { e ->
@@ -230,7 +243,6 @@ fun RegisterScreen(navController: NavHostController) {
                     ) {
                         Text("Registrar", color = Color.White, fontSize = 14.sp)
                     }
-
 
                     if (errorMessage.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(8.dp))
