@@ -1,14 +1,15 @@
 package com.example.checkwork
 
-import CalendarView
 import RegisterScreen
 import ResetPasswordScreen
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.rememberNavController
@@ -22,6 +23,7 @@ import com.example.checkwork.NavigationRegister.CheckHistoryScreen
 import com.example.checkwork.Profile.AddNum
 import com.example.checkwork.Profile.ProfileScreen
 import com.example.checkwork.CRUD_USERS.FunctionsCrud.AdminCrudScreen
+import com.example.checkwork.calendar.CalendarView
 import com.example.checkwork.form.FormularioEmpresaScreen
 import com.example.checkwork.supportview.SoporteScreen
 import com.google.firebase.FirebaseApp
@@ -29,6 +31,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class MainActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FirebaseApp.initializeApp(this)
@@ -81,7 +84,7 @@ class MainActivity : ComponentActivity() {
                     CheckHistoryScreen(navController)
                 }
                 composable(route = "reset_password") {
-                    ResetPasswordScreen(navController = navController)
+                    ResetPasswordScreen(navController)
                 }
                 composable(route = "crud") {
                     AdminCrudScreen(navController)

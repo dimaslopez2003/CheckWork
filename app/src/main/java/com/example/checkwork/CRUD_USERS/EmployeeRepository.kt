@@ -1,7 +1,7 @@
 package com.example.checkwork.CRUD_USERS
 
 import com.example.checkwork.FunctionTime.db
-import com.example.checkwork.NavigationRegister.CheckEntry
+import com.example.checkwork.NavigationRegister.dataentryes.CheckEntry
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.perf.FirebasePerformance
 import kotlinx.coroutines.tasks.await

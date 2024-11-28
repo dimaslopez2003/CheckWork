@@ -1,40 +1,25 @@
 package com.example.checkwork.NavigationRegister
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import coil.compose.rememberAsyncImagePainter
 import com.example.checkwork.Navigation.BottomNavigationBar
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.logEvent
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-
-
-data class CheckEntry(
-    val fecha: String,
-    val hora: String,
-    val tipo: String,
-    val comentarios: String = ""
-)
+import com.example.checkwork.NavigationRegister.dataentryes.CheckEntry
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
@@ -148,93 +133,22 @@ fun CheckHistoryScreen(navController: NavHostController) {
 }
 
 @Composable
-fun ProfileCard(profileImageUrl: String?, username: String, departamento: String, isDarkModeEnabled: Boolean) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        shape = RoundedCornerShape(8.dp),
-        elevation = 4.dp,
-        backgroundColor = if (isDarkModeEnabled) Color(0xFF303030) else Color.White
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (profileImageUrl != null) {
-                Image(
-                    painter = rememberAsyncImagePainter(profileImageUrl),
-                    contentDescription = "Foto de Perfil",
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Filled.AccountCircle,
-                    contentDescription = "Imagen de Perfil",
-                    modifier = Modifier.size(80.dp),
-                    tint = if (isDarkModeEnabled) Color.Gray else Color.Black
-                )
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column {
-                Text(
-                    text = departamento,
-                    fontSize = 16.sp,
-                    color = if (isDarkModeEnabled) Color.LightGray else Color.Gray,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = username,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isDarkModeEnabled) Color.White else Color.Black
-                )
-            }
-        }
-    }
-}
+fun DatePickerDialog(
+    onDateSelected: (String) -> Unit,
+    onDismissRequest: () -> Unit
+) {
+    val context = LocalContext.current
+    val calendar = java.util.Calendar.getInstance()
+    val year = calendar.get(java.util.Calendar.YEAR)
+    val month = calendar.get(java.util.Calendar.MONTH)
+    val day = calendar.get(java.util.Calendar.DAY_OF_MONTH)
 
-@Composable
-fun RecordsCard(checkEntries: List<CheckEntry>, isDarkModeEnabled: Boolean) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        shape = RoundedCornerShape(8.dp),
-        backgroundColor = if (isDarkModeEnabled) Color(0xFF303030) else Color.White,
-        elevation = 4.dp
-    ) {
-        Column(modifier = Modifier.padding(8.dp)) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                TableHeader("Fecha", isDarkModeEnabled)
-                TableHeader("Hora", isDarkModeEnabled)
-                TableHeader("Tipo", isDarkModeEnabled)
-            }
-            Divider(color = if (isDarkModeEnabled) Color.Gray else Color.LightGray)
-
-            checkEntries.forEach { entry ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    TableCell(entry.fecha, isDarkModeEnabled)
-                    TableCell(entry.hora, isDarkModeEnabled)
-                    TableCell(entry.tipo, isDarkModeEnabled)
-                }
-                Divider(color = if (isDarkModeEnabled) Color.Gray else Color.LightGray)
-            }
-        }
-    }
+    android.app.DatePickerDialog(context, { _, selectedYear, selectedMonth, selectedDay ->
+        val formattedDate = "%04d-%02d-%02d".format(selectedYear, selectedMonth + 1, selectedDay)
+        onDateSelected(formattedDate) // Devolver la fecha seleccionada
+    }, year, month, day).apply {
+        setOnDismissListener { onDismissRequest() }
+    }.show()
 }
 
 @Composable
