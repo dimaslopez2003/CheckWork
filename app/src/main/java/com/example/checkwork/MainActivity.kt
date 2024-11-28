@@ -2,6 +2,7 @@ package com.example.checkwork
 
 import CalendarView
 import RegisterScreen
+import ResetPasswordScreen
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -21,7 +22,6 @@ import com.example.checkwork.NavigationRegister.CheckHistoryScreen
 import com.example.checkwork.Profile.AddNum
 import com.example.checkwork.Profile.ProfileScreen
 import com.example.checkwork.CRUD_USERS.FunctionsCrud.AdminCrudScreen
-import com.example.checkwork.forgot.*
 import com.example.checkwork.form.FormularioEmpresaScreen
 import com.example.checkwork.supportview.SoporteScreen
 import com.google.firebase.FirebaseApp
@@ -80,17 +80,8 @@ class MainActivity : ComponentActivity() {
                 composable(route = "navigate_register") {
                     CheckHistoryScreen(navController)
                 }
-                composable(route = "forgot_password") {
-                    ForgotPasswordScreen(navController)
-                }
-                composable(route = "forgot_password_2") {
-                    ForgotPasswordMethodScreen(navController)
-                }
-                composable(route = "forgot_password_3") {
-                    ForgotPasswordNewPasswordScreen(navController)
-                }
-                composable(route = "forgot_password_4") {
-                    ForgotPasswordUpdatedScreen(navController)
+                composable(route = "reset_password") {
+                    ResetPasswordScreen(navController = navController)
                 }
                 composable(route = "crud") {
                     AdminCrudScreen(navController)

@@ -1,9 +1,11 @@
 package com.example.checkwork.CRUD_USERS
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -19,6 +21,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.airbnb.lottie.compose.*
 import com.example.checkwork.R
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,6 +37,9 @@ fun ViewEmployeeRecordsScreen(
     var isLoading by remember { mutableStateOf(true) }
     var isError by remember { mutableStateOf(false) }
     var isBackButtonEnabled by remember { mutableStateOf(false) }
+    var isDarkModeEnabled by remember { mutableStateOf(false) }
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
     val checkComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.check)) // Animación para la Card
     val noRecordsComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.notfound)) // Animación sin registros
     val checkAnimationState = animateLottieCompositionAsState(checkComposition, iterations = 1) // Una sola iteración
@@ -56,12 +63,20 @@ fun ViewEmployeeRecordsScreen(
         delay(500)
         isBackButtonEnabled = true
     }
+    fun updateDarkModePreferenceInFirebase(isDarkMode: Boolean) {
+        auth.currentUser?.uid?.let { userId ->
+            db.collection("users").document(userId).update("darkModeEnabled", isDarkMode)
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.fillMaxWidth(),
                 title = { Text("Registros de Empleado", color = Color.White) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0056E0)),
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0)
+                ),
                 navigationIcon = {
                     IconButton(onClick = {
                         if (isBackButtonEnabled) {
@@ -69,8 +84,23 @@ fun ViewEmployeeRecordsScreen(
                             navController.popBackStack()
                         }
                     }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Regresar", tint = Color.White)
+                        Icon(
+                            Icons.Filled.ArrowBack,
+                            contentDescription = "Regresar",
+                            tint = Color.White
+                        )
                     }
+                },
+                actions = {
+                    // Interruptor de modo oscuro en la barra superior
+                    androidx.compose.material.Switch(
+                        checked = isDarkModeEnabled,
+                        onCheckedChange = {
+                            isDarkModeEnabled = it
+                            updateDarkModePreferenceInFirebase(it) // Guardar el estado en Firebase
+                        },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF0056E0))
+                    )
                 }
             )
         }
@@ -80,7 +110,11 @@ fun ViewEmployeeRecordsScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(if (isDarkModeEnabled) Color(0xFF121212) else Color(0xFFE0F7FA)),
+                ) {
                 if (isLoading) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -129,7 +163,11 @@ fun ViewEmployeeRecordsScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 8.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isDarkModeEnabled) Color(0xFF424242) else Color(
+                                    0xFFE3F2FD
+                                ) // Gris para modo oscuro
+                            ),
                             shape = RoundedCornerShape(12.dp),
                             elevation = CardDefaults.cardElevation(4.dp)
                         ) {

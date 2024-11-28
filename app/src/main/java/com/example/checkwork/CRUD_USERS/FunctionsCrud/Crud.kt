@@ -1,7 +1,6 @@
 package com.example.checkwork.CRUD_USERS.FunctionsCrud
 
 import android.util.Log
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 fun updateEmployeeInFirebase(db: FirebaseFirestore, documentId: String, username: String, employeeId: String, departamento: String) {
@@ -48,8 +47,3 @@ fun loadEmployees(db: FirebaseFirestore, companyCode: String, empleados: Mutable
         }
 }
 
-fun updateDarkModePreferenceInFirebase(auth: FirebaseAuth, db: FirebaseFirestore, isDarkMode: Boolean) {
-    auth.currentUser?.uid?.let { userId ->
-        db.collection("users").document(userId).update("darkModeEnabled", isDarkMode)
-    }
-}
