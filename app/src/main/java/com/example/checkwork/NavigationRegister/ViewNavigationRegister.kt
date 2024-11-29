@@ -111,6 +111,8 @@ fun CheckHistoryScreen(navController: NavHostController) {
             )
         },
         content = {
+            val companyCode = "COMP55538" // Define o recupera el código de la empresa desde Firestore
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -119,7 +121,13 @@ fun CheckHistoryScreen(navController: NavHostController) {
             ) {
                 ProfileCard(profileImageUrl, username, departamento, isDarkModeEnabled)
                 Spacer(modifier = Modifier.height(16.dp))
-                RecordsCard(checkEntries, isDarkModeEnabled)
+                // Pasa los parámetros requeridos a RecordsCard
+                RecordsCard(
+                    checkEntries = checkEntries,
+                    isDarkModeEnabled = isDarkModeEnabled,
+                    employeeId = userId,
+                    departamento = departamento
+                )
             }
         },
         bottomBar = {
@@ -131,22 +139,3 @@ fun CheckHistoryScreen(navController: NavHostController) {
     )
 }
 
-
-@Composable
-fun DatePickerDialog(
-    onDateSelected: (String) -> Unit,
-    onDismissRequest: () -> Unit
-) {
-    val context = LocalContext.current
-    val calendar = java.util.Calendar.getInstance()
-    val year = calendar.get(java.util.Calendar.YEAR)
-    val month = calendar.get(java.util.Calendar.MONTH)
-    val day = calendar.get(java.util.Calendar.DAY_OF_MONTH)
-
-    android.app.DatePickerDialog(context, { _, selectedYear, selectedMonth, selectedDay ->
-        val formattedDate = "%04d-%02d-%02d".format(selectedYear, selectedMonth + 1, selectedDay)
-        onDateSelected(formattedDate) // Devolver la fecha seleccionada
-    }, year, month, day).apply {
-        setOnDismissListener { onDismissRequest() }
-    }.show()
-}
