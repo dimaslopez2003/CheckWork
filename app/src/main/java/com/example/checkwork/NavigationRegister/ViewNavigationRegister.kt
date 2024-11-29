@@ -10,9 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.checkwork.Navigation.BottomNavigationBar
 import com.google.firebase.analytics.FirebaseAnalytics
@@ -21,12 +19,12 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.example.checkwork.NavigationRegister.dataentryes.CheckEntry
 
-@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter", "MissingPermission")
 @Composable
 fun CheckHistoryScreen(navController: NavHostController) {
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
-    val firebaseAnalytics = FirebaseAnalytics.getInstance(LocalContext.current) // Mover aquí
+    val firebaseAnalytics = FirebaseAnalytics.getInstance(LocalContext.current)
 
     var profileImageUrl by remember { mutableStateOf<String?>(null) }
     var userId by remember { mutableStateOf("") }
@@ -58,8 +56,9 @@ fun CheckHistoryScreen(navController: NavHostController) {
                             val fecha = doc.getString("fecha") ?: "Sin fecha"
                             val hora = doc.getString("hora") ?: "Sin hora"
                             val tipo = doc.getString("tipo") ?: "Sin tipo"
-                            val comentarios = doc.getString("comentarios") ?: ""
-                            CheckEntry(fecha, hora, tipo, comentarios)
+                            val latitud = doc.getDouble("latitud")?.toString() ?: "Sin latitud" // Convertir a String
+                            val longitud = doc.getDouble("longitud")?.toString() ?: "Sin longitud"
+                            CheckEntry(fecha, hora, tipo, latitud, longitud)
                         }
                         checkEntries = entries.sortedByDescending { it.fecha + it.hora }
 
@@ -132,6 +131,7 @@ fun CheckHistoryScreen(navController: NavHostController) {
     )
 }
 
+
 @Composable
 fun DatePickerDialog(
     onDateSelected: (String) -> Unit,
@@ -149,29 +149,4 @@ fun DatePickerDialog(
     }, year, month, day).apply {
         setOnDismissListener { onDismissRequest() }
     }.show()
-}
-
-@Composable
-fun TableHeader(text: String, isDarkModeEnabled: Boolean) {
-    Text(
-        text = text,
-        fontWeight = FontWeight.Bold,
-        color = if (isDarkModeEnabled) Color.LightGray else Color.Black,
-        fontSize = 16.sp
-    )
-}
-
-@Composable
-fun TableCell(text: String, isDarkModeEnabled: Boolean, textColor: Color = if (isDarkModeEnabled) Color.LightGray else Color.Black) {
-    Box(
-        modifier = Modifier
-            .padding(horizontal = 1.dp, vertical = 12.dp)
-            .fillMaxWidth(0.3f)
-    ) {
-        Text(
-            text = text,
-            color = textColor,
-            fontSize = 13.sp
-        )
-    }
 }
