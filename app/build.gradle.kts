@@ -51,6 +51,8 @@ android {
     }
 }
 
+
+
 dependencies {
 
     implementation(libs.generativeai)
@@ -136,5 +138,6 @@ dependencies {
     implementation ("io.coil-kt:coil-compose:2.3.0") // Para cargar imágenes
     implementation ("com.squareup.retrofit2:retrofit:2.9.0") // Cliente Retrofit
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0") // Convertidor JSON a Kotlin
+
 }
 

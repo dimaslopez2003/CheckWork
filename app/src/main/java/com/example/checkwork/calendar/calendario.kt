@@ -8,7 +8,9 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,6 +28,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.delay
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun CalendarView(navController: NavHostController) {
@@ -70,14 +73,17 @@ fun CalendarView(navController: NavHostController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            androidx.compose.material3.TopAppBar(
                 modifier = Modifier.fillMaxWidth(),
                 title = {
                     androidx.compose.material3.Text(
-                        "Registra tu empresa",
+                        "Calendario",
                         color = Color.White
                     )
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0)
+                ),
                 navigationIcon = {
                     androidx.compose.material3.IconButton(onClick =
                     {
@@ -102,7 +108,7 @@ fun CalendarView(navController: NavHostController) {
                         },
                         colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF0056E0))
                     )
-                },
+                }
             )
         },
         bottomBar = {

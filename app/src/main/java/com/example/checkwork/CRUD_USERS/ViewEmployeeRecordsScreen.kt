@@ -1,11 +1,13 @@
 package com.example.checkwork.CRUD_USERS
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.SwitchDefaults
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -13,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
@@ -20,6 +23,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.airbnb.lottie.compose.*
+import com.example.checkwork.NavigationRegister.dataentryes.CheckEntry
+import com.example.checkwork.NavigationRegister.dataentryes.generatePdf
 import com.example.checkwork.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -40,9 +45,10 @@ fun ViewEmployeeRecordsScreen(
     var isDarkModeEnabled by remember { mutableStateOf(false) }
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
-    val checkComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.check)) // Animación para la Card
-    val noRecordsComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.notfound)) // Animación sin registros
-    val checkAnimationState = animateLottieCompositionAsState(checkComposition, iterations = 1) // Una sola iteración
+    val context = LocalContext.current
+    val checkComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.check))
+    val noRecordsComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.notfound))
+    val checkAnimationState = animateLottieCompositionAsState(checkComposition, iterations = 1)
 
     // Cargar datos iniciales
     LaunchedEffect(employeeId) {
@@ -58,11 +64,21 @@ fun ViewEmployeeRecordsScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        auth.currentUser?.uid?.let { userId ->
+            db.collection("users").document(userId).get()
+                .addOnSuccessListener { document ->
+                    isDarkModeEnabled = document.getBoolean("darkModeEnabled") ?: false
+                }
+        }
+    }
+
     // Delay para habilitar el botón de retroceso
     LaunchedEffect(Unit) {
         delay(500)
         isBackButtonEnabled = true
     }
+
     fun updateDarkModePreferenceInFirebase(isDarkMode: Boolean) {
         auth.currentUser?.uid?.let { userId ->
             db.collection("users").document(userId).update("darkModeEnabled", isDarkMode)
@@ -73,7 +89,12 @@ fun ViewEmployeeRecordsScreen(
         topBar = {
             TopAppBar(
                 modifier = Modifier.fillMaxWidth(),
-                title = { Text("Registros de Empleado", color = Color.White) },
+                title = {
+                    Text(
+                        "Registro de: $employeeName",
+                        color = Color.White
+                    )
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = if (isDarkModeEnabled) Color(0xFF303030) else Color(0xFF0056E0)
                 ),
@@ -92,18 +113,19 @@ fun ViewEmployeeRecordsScreen(
                     }
                 },
                 actions = {
-                    // Interruptor de modo oscuro en la barra superior
-                    androidx.compose.material.Switch(
+                    Switch(
                         checked = isDarkModeEnabled,
                         onCheckedChange = {
                             isDarkModeEnabled = it
-                            updateDarkModePreferenceInFirebase(it) // Guardar el estado en Firebase
+                            updateDarkModePreferenceInFirebase(it)
                         },
-                        colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF0056E0))
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color(0xFF0056E0)
+                        )
                     )
                 }
             )
-        }
+        },
     ) { padding ->
         Surface(
             modifier = Modifier
@@ -114,7 +136,7 @@ fun ViewEmployeeRecordsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(if (isDarkModeEnabled) Color(0xFF121212) else Color(0xFFE0F7FA)),
-                ) {
+            ) {
                 if (isLoading) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -130,11 +152,10 @@ fun ViewEmployeeRecordsScreen(
                         Text(
                             text = "Error al cargar los datos.",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.error
+                            color = if (isDarkModeEnabled) Color.White else Color.Black,
                         )
                     }
                 } else if (employeeRecords.isEmpty()) {
-                    // Mostrar animación y texto cuando no hay registros
                     Column(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.Center,
@@ -149,7 +170,7 @@ fun ViewEmployeeRecordsScreen(
                         Text(
                             text = "No hay registros disponibles.",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onBackground
+                            color = if (isDarkModeEnabled) Color.White else Color.Black,
                         )
                     }
                 } else {
@@ -158,15 +179,13 @@ fun ViewEmployeeRecordsScreen(
                             .fillMaxSize()
                             .padding(16.dp)
                     ) {
-                        // Card con texto más pequeño y animación
+                        // Card con animación y nombre del empleado
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 8.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = if (isDarkModeEnabled) Color(0xFF424242) else Color(
-                                    0xFFE3F2FD
-                                ) // Gris para modo oscuro
+                                containerColor = if (isDarkModeEnabled) Color(0xFF424242) else Color(0xFFE3F2FD)
                             ),
                             shape = RoundedCornerShape(12.dp),
                             elevation = CardDefaults.cardElevation(4.dp)
@@ -182,7 +201,7 @@ fun ViewEmployeeRecordsScreen(
                                         text = "Registros de: $employeeName",
                                         style = MaterialTheme.typography.bodySmall.copy(
                                             fontSize = 16.sp,
-                                            color = Color(0xFF1E88E5)
+                                            color = if (isDarkModeEnabled) Color.White else Color.Black,
                                         )
                                     )
                                 }
@@ -196,6 +215,36 @@ fun ViewEmployeeRecordsScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
+                        // Botón para generar PDF
+                        Button(
+                            onClick = {
+                                generatePdf(
+                                    context = context,
+                                    checkEntries = employeeRecords.map {
+                                        CheckEntry(
+                                            fecha = it.fecha,
+                                            hora = it.hora,
+                                            tipo = it.tipo
+                                        )
+                                    },
+                                    employeeId = employeeId,
+                                    departamento = "Sistemas", // Cambia según tu lógica
+                                    nombreEmpresa = "Instituto Césare"
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isDarkModeEnabled) Color.Gray else Color(0xFF0056E0)
+                            )
+                        ) {
+                            Text(
+                                text = "Generar PDF",
+                                color = Color.White
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
                         LazyColumn(modifier = Modifier.fillMaxSize()) {
                             items(employeeRecords) { record ->
                                 Row(
@@ -204,11 +253,52 @@ fun ViewEmployeeRecordsScreen(
                                         .padding(vertical = 8.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text(record.fecha, modifier = Modifier.weight(1f))
-                                    Text(record.hora, modifier = Modifier.weight(1f))
-                                    Text(record.tipo, modifier = Modifier.weight(1f))
+                                    val textColor = if (isDarkModeEnabled) Color.White else Color.Black
+
+                                    // Fecha
+                                    Text(
+                                        text = record.fecha,
+                                        modifier = Modifier.weight(1f),
+                                        color = textColor
+                                    )
+
+                                    // Hora
+                                    Text(
+                                        text = record.hora,
+                                        modifier = Modifier.weight(1f),
+                                        color = textColor
+                                    )
+
+                                    // Tipo
+                                    Text(
+                                        text = record.tipo,
+                                        modifier = Modifier.weight(1f),
+                                        color = textColor
+                                    )
+
+                                    // Enlace a Google Maps
+                                    Text(
+                                        text = "Ver ubicación",
+                                        color = Color.Blue,
+                                        fontSize = 13.sp,
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clickable {
+                                                val locationUrl =
+                                                    "https://www.google.com/maps?q=${record.latitud},${record.longitud}"
+                                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                                    data = Uri.parse(locationUrl)
+                                                }
+                                                try {
+                                                    context.startActivity(intent)
+                                                } catch (e: Exception) {
+                                                    println("Error al abrir el enlace: ${e.message}")
+                                                }
+                                            }
+                                    )
                                 }
-                                Divider()
+
+                                Divider(color = if (isDarkModeEnabled) Color.Gray else Color.LightGray)
                             }
                         }
                     }

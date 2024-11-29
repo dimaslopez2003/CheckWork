@@ -2,70 +2,55 @@ package com.example.checkwork.NavigationRegister
 
 import android.widget.Toast
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Card
-import androidx.compose.material.Divider
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.checkwork.NavigationRegister.dataentryes.CheckEntry
-
+import com.example.checkwork.NavigationRegister.dataentryes.generatePdf
 @Composable
-fun RecordsCard(checkEntries: List<CheckEntry>, isDarkModeEnabled: Boolean) {
+fun RecordsCard(
+    checkEntries: List<CheckEntry>,
+    isDarkModeEnabled: Boolean,
+    employeeId: String,
+    departamento: String
+) {
+    val context = LocalContext.current
     val itemsPerPage = 10
     var currentPage by remember { mutableStateOf(0) }
-    var filterDate by remember { mutableStateOf("") }
-    var showDatePicker by remember { mutableStateOf(false) }
     val totalPages = (checkEntries.size + itemsPerPage - 1) / itemsPerPage
-
-    // Mostrar el DatePicker cuando `showDatePicker` sea true
-    if (showDatePicker) {
-        DatePickerDialog(onDateSelected = { selectedDate ->
-            filterDate = selectedDate
-            currentPage = 0 // Reiniciar la paginación al aplicar un filtro
-            showDatePicker = false // Ocultar el DatePicker
-        }, onDismissRequest = {
-            showDatePicker = false // Ocultar el DatePicker si se cancela
-        })
-    }
+    val pagedEntries = checkEntries.drop(currentPage * itemsPerPage).take(itemsPerPage)
 
     Column {
-        // Filtro de fecha
+        // Botón para generar PDF
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.End
         ) {
-            IconButton(onClick = {
-                showDatePicker = true // Mostrar el DatePicker al hacer clic
+            TextButton(onClick = {
+                generatePdf(
+                    context,
+                    pagedEntries,
+                    employeeId,
+                    departamento,
+                    nombreEmpresa = "Instituto Césare"
+                )
             }) {
-                Icon(
-                    imageVector = Icons.Default.FilterList,
-                    contentDescription = "Filtrar por fecha",
-                    tint = if (isDarkModeEnabled) Color.LightGray else Color.Black
+                Text(
+                    text = "Generar PDF",
+                    color = if (isDarkModeEnabled) Color.LightGray else Color.Black
                 )
             }
         }
@@ -75,8 +60,7 @@ fun RecordsCard(checkEntries: List<CheckEntry>, isDarkModeEnabled: Boolean) {
                 .fillMaxWidth()
                 .padding(8.dp),
             shape = RoundedCornerShape(8.dp),
-            backgroundColor = if (isDarkModeEnabled) Color(0xFF303030) else Color.White,
-            elevation = 4.dp
+            backgroundColor = if (isDarkModeEnabled) Color(0xFF303030) else Color.White
         ) {
             Column(modifier = Modifier.padding(8.dp)) {
                 Row(
@@ -88,19 +72,9 @@ fun RecordsCard(checkEntries: List<CheckEntry>, isDarkModeEnabled: Boolean) {
                     TableHeader("Fecha", isDarkModeEnabled)
                     TableHeader("Hora", isDarkModeEnabled)
                     TableHeader("Tipo", isDarkModeEnabled)
-                    TableHeader("Ubicación", isDarkModeEnabled) // Nueva columna
+                    TableHeader("Ubicación", isDarkModeEnabled)
                 }
                 Divider(color = if (isDarkModeEnabled) Color.Gray else Color.LightGray)
-
-                // Aplicar filtro y paginación
-                val filteredEntries = if (filterDate.isNotEmpty()) {
-                    checkEntries.filter { it.fecha == filterDate }
-                } else {
-                    checkEntries
-                }
-
-                val pagedEntries = filteredEntries.drop(currentPage * itemsPerPage)
-                    .take(itemsPerPage)
 
                 Column(
                     modifier = Modifier
@@ -119,14 +93,14 @@ fun RecordsCard(checkEntries: List<CheckEntry>, isDarkModeEnabled: Boolean) {
                             TableCell(entry.fecha, isDarkModeEnabled)
                             TableCell(entry.hora, isDarkModeEnabled)
                             TableCell(entry.tipo, isDarkModeEnabled)
-                            TableCellWithLink(entry.latitud, entry.longitud, isDarkModeEnabled) // Enlace a Google Maps
+                            TableCellWithLink(entry.latitud, entry.longitud, isDarkModeEnabled)
                         }
                         Divider(color = if (isDarkModeEnabled) Color.Gray else Color.LightGray)
                     }
                 }
 
                 // Controles de paginación
-                if (filteredEntries.size > itemsPerPage) {
+                if (checkEntries.size > itemsPerPage) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -173,7 +147,6 @@ fun TableCellWithLink(
 ) {
     val context = LocalContext.current
 
-    // Verificamos que ambas coordenadas sean válidas
     val locationUrl = if (latitud != null && longitud != null) {
         "https://www.google.com/maps?q=${latitud},${longitud}"
     } else {
@@ -187,14 +160,12 @@ fun TableCellWithLink(
                 color = Color.Blue,
                 fontSize = 13.sp,
                 modifier = Modifier.clickable {
-                    // Abrimos el enlace en Google Maps
                     try {
                         val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
                             data = android.net.Uri.parse(locationUrl)
                         }
                         context.startActivity(intent)
                     } catch (e: Exception) {
-                        // Mostramos un mensaje en caso de error
                         Toast.makeText(context, "Error al abrir el enlace", Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -208,7 +179,6 @@ fun TableCellWithLink(
         }
     }
 }
-
 
 @Composable
 fun TableHeader(text: String, isDarkModeEnabled: Boolean) {

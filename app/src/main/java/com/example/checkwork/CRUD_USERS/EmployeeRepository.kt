@@ -10,8 +10,19 @@ data class EmployeeRecord(
     val fecha: String,
     val hora: String,
     val tipo: String,
-    val comentarios: String
+    val latitud: String = null.toString(),
+    val longitud: String = null.toString(),
+    val googleMapsLink: String = generateGoogleMapsLink(latitud, longitud)
 )
+
+// Función para generar el enlace de Google Maps
+fun generateGoogleMapsLink(latitud: String, longitud: String): String {
+    return if (latitud.isNotEmpty() && longitud.isNotEmpty()) {
+        "https://www.google.com/maps?q=$latitud,$longitud"
+    } else {
+        "Sin ubicación"
+    }
+}
 
 class EmployeeRepository {
 
@@ -29,8 +40,18 @@ class EmployeeRepository {
                 val fecha = document.getString("fecha") ?: ""
                 val hora = document.getString("hora") ?: ""
                 val tipo = document.getString("tipo") ?: ""
-                val comentarios = document.getString("comentarios") ?: ""
-                records.add(EmployeeRecord(fecha, hora, tipo, comentarios))
+                val longitud = document.getDouble("longitud")
+                val latitud = document.getDouble("latitud")
+
+                records.add(
+                    EmployeeRecord(
+                        fecha,
+                        hora,
+                        tipo,
+                        latitud.toString(),
+                        longitud.toString()
+                    )
+                )
             }
             records
         } catch (e: Exception) {
@@ -65,7 +86,15 @@ suspend fun fetchCheckEntries(employeeId: String): List<CheckEntry> {
                 val fecha = doc.getString("fecha") ?: "N/A"
                 val hora = doc.getString("hora") ?: "N/A"
                 val tipo = doc.getString("tipo") ?: "N/A"
-                CheckEntry(fecha, hora, tipo)
+                val longitud = doc.getDouble("longitud") ?: 0.0
+                val latitud = doc.getDouble("latitud") ?: 0.0
+                CheckEntry(
+                    fecha,
+                    hora,
+                    tipo,
+                    longitud.toString(),
+                    latitud.toString()
+                )
             }
         trace.putMetric("fetch_time_ms", System.currentTimeMillis() - startTime)
         trace.incrementMetric("records_fetched", records.size.toLong())
@@ -77,4 +106,3 @@ suspend fun fetchCheckEntries(employeeId: String): List<CheckEntry> {
         trace.stop()
     }
 }
-
