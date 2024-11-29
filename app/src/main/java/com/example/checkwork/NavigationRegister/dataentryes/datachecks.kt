@@ -4,5 +4,6 @@ data class CheckEntry(
     val fecha: String,
     val hora: String,
     val tipo: String,
-    val comentarios: String = ""
+    val latitud: String = null.toString(),
+    val longitud: String = null.toString()
 )

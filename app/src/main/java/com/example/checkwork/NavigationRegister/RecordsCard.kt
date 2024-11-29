@@ -1,5 +1,7 @@
 package com.example.checkwork.NavigationRegister
 
+import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,7 +27,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.checkwork.NavigationRegister.dataentryes.CheckEntry
 
 @Composable
@@ -33,7 +37,7 @@ fun RecordsCard(checkEntries: List<CheckEntry>, isDarkModeEnabled: Boolean) {
     val itemsPerPage = 10
     var currentPage by remember { mutableStateOf(0) }
     var filterDate by remember { mutableStateOf("") }
-    var showDatePicker by remember { mutableStateOf(false) } // Estado para controlar el DatePicker
+    var showDatePicker by remember { mutableStateOf(false) }
     val totalPages = (checkEntries.size + itemsPerPage - 1) / itemsPerPage
 
     // Mostrar el DatePicker cuando `showDatePicker` sea true
@@ -84,6 +88,7 @@ fun RecordsCard(checkEntries: List<CheckEntry>, isDarkModeEnabled: Boolean) {
                     TableHeader("Fecha", isDarkModeEnabled)
                     TableHeader("Hora", isDarkModeEnabled)
                     TableHeader("Tipo", isDarkModeEnabled)
+                    TableHeader("Ubicación", isDarkModeEnabled) // Nueva columna
                 }
                 Divider(color = if (isDarkModeEnabled) Color.Gray else Color.LightGray)
 
@@ -114,6 +119,7 @@ fun RecordsCard(checkEntries: List<CheckEntry>, isDarkModeEnabled: Boolean) {
                             TableCell(entry.fecha, isDarkModeEnabled)
                             TableCell(entry.hora, isDarkModeEnabled)
                             TableCell(entry.tipo, isDarkModeEnabled)
+                            TableCellWithLink(entry.latitud, entry.longitud, isDarkModeEnabled) // Enlace a Google Maps
                         }
                         Divider(color = if (isDarkModeEnabled) Color.Gray else Color.LightGray)
                     }
@@ -156,4 +162,69 @@ fun RecordsCard(checkEntries: List<CheckEntry>, isDarkModeEnabled: Boolean) {
             }
         }
     }
+}
+
+@Composable
+fun TableCellWithLink(
+    latitud: String?,
+    longitud: String?,
+    isDarkModeEnabled: Boolean,
+    textColor: Color = if (isDarkModeEnabled) Color.LightGray else Color.Black
+) {
+    val context = LocalContext.current
+
+    // Verificamos que ambas coordenadas sean válidas
+    val locationUrl = if (latitud != null && longitud != null) {
+        "https://www.google.com/maps?q=${latitud},${longitud}"
+    } else {
+        null
+    }
+
+    Column {
+        if (locationUrl != null) {
+            Text(
+                text = "Ver ubicación",
+                color = Color.Blue,
+                fontSize = 13.sp,
+                modifier = Modifier.clickable {
+                    // Abrimos el enlace en Google Maps
+                    try {
+                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                            data = android.net.Uri.parse(locationUrl)
+                        }
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        // Mostramos un mensaje en caso de error
+                        Toast.makeText(context, "Error al abrir el enlace", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            )
+        } else {
+            Text(
+                text = "Sin ubicación",
+                color = textColor,
+                fontSize = 13.sp
+            )
+        }
+    }
+}
+
+
+@Composable
+fun TableHeader(text: String, isDarkModeEnabled: Boolean) {
+    Text(
+        text = text,
+        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+        color = if (isDarkModeEnabled) Color.LightGray else Color.Black,
+        fontSize = 16.sp
+    )
+}
+
+@Composable
+fun TableCell(text: String, isDarkModeEnabled: Boolean) {
+    Text(
+        text = text,
+        color = if (isDarkModeEnabled) Color.LightGray else Color.Black,
+        fontSize = 13.sp
+    )
 }

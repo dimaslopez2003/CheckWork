@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.checkwork.Checks.registrarEntradaSalida
+import com.example.checkwork.Checks.registrarEntradaSalidaConUbicacion
 
 @Composable
 fun ContentSection(
@@ -130,7 +130,8 @@ fun ContentSection(
                         val currentTimeMillis = System.currentTimeMillis()
                         entryTime = currentTimeMillis // Registrar hora de entrada
 
-                        registrarEntradaSalida(
+                        registrarEntradaSalidaConUbicacion(
+                            context = context, // Pasar el contexto requerido
                             tipo = "entrada",
                             onSuccess = {
                                 onCheckUpdate(Pair(true, hasCheckedOut))
@@ -161,7 +162,8 @@ fun ContentSection(
 
                         // Validar si la salida ocurre dentro de las 8 horas
                         if (entryTime != null && (currentTimeMillis - entryTime!!) <= 8 * 60 * 60 * 1000) {
-                            registrarEntradaSalida(
+                            registrarEntradaSalidaConUbicacion(
+                                context = context, // Pasar el contexto requerido
                                 tipo = "salida",
                                 onSuccess = {
                                     onCheckUpdate(Pair(hasCheckedIn, true))

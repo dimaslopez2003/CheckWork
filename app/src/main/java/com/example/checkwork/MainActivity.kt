@@ -2,6 +2,8 @@ package com.example.checkwork
 
 import RegisterScreen
 import ResetPasswordScreen
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -9,9 +11,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -35,6 +40,21 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FirebaseApp.initializeApp(this)
+
+        // Registrar permisos de ubicación
+        val requestPermissionsLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions ->
+            val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+            val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+
+            if (!fineLocationGranted && !coarseLocationGranted) {
+                Toast.makeText(this, "Los permisos de ubicación son necesarios para continuar", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // Verificar permisos al iniciar
+        checkLocationPermissions(requestPermissionsLauncher)
 
         setContent {
             val auth = FirebaseAuth.getInstance()
@@ -89,7 +109,8 @@ class MainActivity : ComponentActivity() {
                 composable(route = "crud") {
                     AdminCrudScreen(navController)
                 }
-                composable(route = "join_company") { JoinEmpresaScreen(navController)
+                composable(route = "join_company") {
+                    JoinEmpresaScreen(navController)
                 }
                 composable(route = "viewGetRegisterScreen/{employeeId}") { backStackEntry ->
                     val employeeId = backStackEntry.arguments?.getString("employeeId")
@@ -98,6 +119,30 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    // Verificar permisos de ubicación
+    private fun checkLocationPermissions(requestPermissionsLauncher: ActivityResultLauncher<Array<String>>) {
+        val fineLocationPermission = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+        val coarseLocationPermission = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+
+        if (fineLocationPermission != PackageManager.PERMISSION_GRANTED ||
+            coarseLocationPermission != PackageManager.PERMISSION_GRANTED
+        ) {
+            // Solicitar permisos si no están concedidos
+            requestPermissionsLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
         }
     }
 }
